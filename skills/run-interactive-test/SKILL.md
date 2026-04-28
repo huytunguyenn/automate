@@ -163,4 +163,4 @@ Always run `$KOBITON_BIN <command> --help` for the specific subcommand before us
 - **Session expired**: `session ping` or command returns auth error — offer to create a new session
 - **Element not found**: suggest getting page source first (`wd get source`) to inspect the UI hierarchy, then try a different locator strategy
 - **Binary not found**: run.sh failed — tell user their platform is not supported
-- **Missing credentials**: direct the user to run `/automate:setup` to configure credentials
+- **Missing credentials**: direct the user to run `/automate:doctor` first to see what's missing; if the credentials file is missing or incomplete, run `/automate:setup` to fetch and write fresh credentials.

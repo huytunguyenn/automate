@@ -23,7 +23,7 @@ function setupValidProject(dir) {
   }))
 
   mkdirSync(join(dir, 'tools'))
-  for (const file of ['devices.yaml', 'sessions.yaml', 'apps.yaml']) {
+  for (const file of ['devices.yaml', 'sessions.yaml', 'apps.yaml', 'user.yaml']) {
     writeFileSync(join(dir, 'tools', file), [
       'tools:',
       '  - name: testTool',

@@ -65,17 +65,21 @@ export KOBITON_AUTH="Basic $(echo -n 'username:apikey' | base64)"
 
 ## Getting Started
 
-After installation, run the setup command to configure the CLI and credentials:
+After installation, run setup to fetch your credentials and write them to `~/.kobiton/.credentials`:
 
 ```
 /automate:setup
 ```
 
-This walks you through:
-1. Verifying the Kobiton CLI is installed
-2. Configuring your API credentials (`~/.kobiton/.credentials`)
+The plugin uses your already-authenticated MCP session (OAuth) to fetch your username and API key — no manual file editing required.
 
-You only need to do this once. Run it again anytime to verify or update your configuration.
+To verify everything is wired correctly, run the diagnostic:
+
+```
+/automate:doctor
+```
+
+`/automate:doctor` is read-only. It checks the CLI installation (symlink + target), the credentials file, the active profile, and required fields, and prints actionable remediation hints for any failures.
 
 ## What You Can Do
 
@@ -126,7 +130,8 @@ You only need to do this once. Run it again anytime to verify or update your con
 
 | Command | Description |
 |---------|-------------|
-| `/automate:setup` | First-time setup — verifies CLI installation and guides credentials configuration |
+| `/automate:setup` | Fetch credentials from the authenticated MCP server and write them to `~/.kobiton/.credentials` |
+| `/automate:doctor` | Read-only diagnostic for CLI installation, credentials file, active profile, and required fields |
 
 
 ## Running Automation Tests

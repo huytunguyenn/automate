@@ -110,11 +110,8 @@ MISSING=()
 [ -z "${KOBITON_USER:-}" ]    && MISSING+=("KOBITON_USER")
 [ -z "${KOBITON_API_KEY:-}" ] && MISSING+=("KOBITON_API_KEY")
 if [ ${#MISSING[@]} -gt 0 ]; then
-  echo "Error: Missing ${MISSING[*]}. Create ~/.kobiton/.credentials with:" >&2
-  echo "  [default]" >&2
-  echo "  KOBITON_PORTAL=<your-portal-url>" >&2
-  echo "  KOBITON_USER=<your-username>" >&2
-  echo "  KOBITON_API_KEY=<your-api-key>" >&2
+  echo "Error: Missing ${MISSING[*]}." >&2
+  echo "Run /automate:doctor to diagnose, or /automate:setup to fetch fresh credentials." >&2
   exit 1
 fi
 
