@@ -105,7 +105,7 @@ Wait for user confirmation, then execute the command via the Bash tool **in the 
 | `https://api.kobiton.com/mcp` | `https://portal.kobiton.com` |
 | `https://api-*.kobiton.com/mcp` | `https://portal-*.kobiton.com` (same `*` suffix) |
 
-For example, an `api-*.kobiton.com` host maps to its matching `portal-*.kobiton.com` host. If the mapping doesn't resolve, ask the user which portal URL to use.
+For example, an `api-*.kobiton.com` host maps to its matching `portal-*.kobiton.com` host. If the mapping doesn't resolve, fall back to `https://portal.kobiton.com`.
 
 **Build the launch URL.** Default to the **device-only view** — it shows just the device screen, no surrounding Kobiton UI, ideal for watching an automation run, sharing, or embedding:
 
