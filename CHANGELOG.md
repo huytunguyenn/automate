@@ -3,7 +3,7 @@
 ## 1.0.3 - 2026-05-13
 
 - `run-automation-suite` skill now defaults to the **device-only view URL** (`?view=device-only`) when surfacing the live session link, hiding the surrounding Kobiton UI for a cleaner watch-the-test experience. Falls back to the default view URL only when the user explicitly asks to interact with the device.
-- Added `api-test-blue.kobiton.com` → `https://portal-test-blue.kobiton.com` to the portal URL mapping.
+- Portal URL mapping in the skill is now derivation-based (`api*.kobiton.com` → `portal*.kobiton.com`) instead of a hard-coded per-env table.
 
 
 ## 1.0.2 - 2026-04-02
