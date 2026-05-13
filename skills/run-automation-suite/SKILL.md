@@ -104,14 +104,21 @@ Wait for user confirmation, then execute the command via the Bash tool **in the 
 |------------|----------------|
 | `api.kobiton.com` | `https://portal.kobiton.com` |
 | `api-test-green.kobiton.com` | `https://portal-test.kobiton.com` |
+| `api-test-blue.kobiton.com` | `https://portal-test-blue.kobiton.com` |
 
-**Build the launch URL:**
+**Build the launch URL.** Default to the **device-only view** — it shows just the device screen, no surrounding Kobiton UI, ideal for watching an automation run, sharing, or embedding:
+
+```
+<portal-base-url>/devices/launch?id=<deviceId>&view=device-only
+```
+
+Where `<deviceId>` is the ID of the selected device from Step 2 (returned by `listDevices`, `getDeviceStatus`, or `reserveDevice`).
+
+**Fall back to the default view** (without `&view=device-only`) only when the user explicitly asks to interact with the device — e.g. "let me drive it manually", "open the full session view", "I want to tap on the screen", or similar interaction-implying language. The default view shows the full Kobiton UI around the device (sidebars, controls, action panels):
 
 ```
 <portal-base-url>/devices/launch?id=<deviceId>
 ```
-
-Where `<deviceId>` is the ID of the selected device from Step 2 (returned by `listDevices`, `getDeviceStatus`, or `reserveDevice`).
 
 **Open the link** in the user's default browser:
 
