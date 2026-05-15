@@ -14,7 +14,9 @@
     "test",
     "automation",
     "appium",
-    "mcp"
+    "mcp",
+    "devices",
+    "kobiton"
   ],
   "interface": {
     "displayName": "Automate",

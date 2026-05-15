@@ -25,7 +25,9 @@
         "test",
         "automation",
         "appium",
-        "mcp"
+        "mcp",
+        "devices",
+        "kobiton"
       ],
       "tags": [
         "mobile",

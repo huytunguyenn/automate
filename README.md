@@ -83,7 +83,7 @@ Then launch Gemini CLI:
 gemini
 ```
 
-The `kobiton` MCP server and the `run-automation-suite` skill are auto-discovered. Confirm the extension is active with `/extensions list` and the MCP server with `/mcp`.
+The `kobiton` MCP server and bundled skills are auto-discovered. Confirm the extension is active with `/extensions list` and the MCP server with `/mcp`.
 
 ### Codex CLI
 
