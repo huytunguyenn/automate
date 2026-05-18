@@ -42,9 +42,10 @@ if [ ! -f "$BINARY" ]; then
 Error: kobiton CLI binary not found for ${PLATFORM}-${ARCH}.
 Expected at: $BINARY
 
-The bundled binary currently supports macOS Apple Silicon only
-(darwin-arm64). Other skills (run-automation-suite) and all MCP
-tools do not depend on this binary and are unaffected.
+The bundled binary currently supports macOS Apple Silicon
+(darwin-arm64) and Linux x64 (linux-x64). Other skills
+(run-automation-suite) and all MCP tools do not depend on this
+binary and are unaffected.
 EOF
   exit 1
 fi
