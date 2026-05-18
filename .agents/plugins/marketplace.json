@@ -1,11 +1,11 @@
 {
-  "name": "kobiton",
+  "name": "kobiton-local",
   "interface": {
-    "displayName": "Kobiton"
+    "displayName": "Kobiton Local"
   },
   "plugins": [
     {
-      "name": "automate",
+      "name": "automate-local",
       "source": "./.codex",
       "category": "testing",
       "policy": {
