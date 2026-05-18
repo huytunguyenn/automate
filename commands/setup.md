@@ -35,7 +35,7 @@ Call the MCP tool `getCredential` with `userIntent: "Bootstrap ~/.kobiton/.crede
 The tool returns:
 
 ```json
-{"username": "<user>", "apiKey": "<key>", "portal": "https://api-test-green.kobiton.com"}
+{"username": "<user>", "apiKey": "<key>", "portal": "https://api-test-white.kobiton.com"}
 ```
 
 **On error:** Surface the tool's error message verbatim. If the message looks auth-related (401, "Unauthorized", etc.), tell the user:
@@ -55,7 +55,7 @@ test -f ~/.kobiton/.credentials && grep -qE '^\[[[:space:]]*default[[:space:]]*\
 - **`DEFAULT_FREE`** (file missing, or no `[default]` section): use profile name `default` without asking the user.
 - **`DEFAULT_EXISTS`**: derive a suggestion from the API hostname (the `portal` field — despite the name, it's the API base URL):
   - Strip protocol, `api-` / `api` prefix, and `.kobiton.com` suffix.
-  - Examples: `https://api-test.kobiton.com` → `test`, `https://api-test-green.kobiton.com` → `test-green`, `https://api.kobiton.com` → `prod`.
+  - Examples: `https://api-test.kobiton.com` → `test`, `https://api-test-white.kobiton.com` → `test-green`, `https://api.kobiton.com` → `prod`.
   - Ask the user: "Profile `[default]` already exists. Suggested name: `[<derived>]`. Use this name, or pick another?"
   - Wait for confirmation or override. Use whatever name the user provides.
 

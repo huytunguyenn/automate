@@ -6,7 +6,7 @@ import {validateProject} from './validate.js'
 
 function setupValidProject(dir) {
   writeFileSync(join(dir, '.mcp.json'), JSON.stringify({
-    mcpServers: {kobiton: {type: 'http', url: 'https://api-test-green.kobiton.com/mcp'}}
+    mcpServers: {kobiton: {type: 'http', url: 'https://api-test-white.kobiton.com/mcp'}}
   }))
 
   mkdirSync(join(dir, '.claude-plugin'))
@@ -45,13 +45,13 @@ function setupValidProject(dir) {
     mcpServers: './.mcp.json'
   }))
   writeFileSync(join(dir, '.codex/.mcp.json'), JSON.stringify({
-    mcpServers: {kobiton: {url: 'https://api-test-green.kobiton.com/mcp'}}
+    mcpServers: {kobiton: {url: 'https://api-test-white.kobiton.com/mcp'}}
   }))
   writeFileSync(join(dir, 'gemini-extension.json'), JSON.stringify({
     name: 'kobiton-automate',
     version: '1.0.2',
     description: 'Test',
-    mcpServers: {kobiton: {httpUrl: 'https://api-test-green.kobiton.com/mcp'}}
+    mcpServers: {kobiton: {httpUrl: 'https://api-test-white.kobiton.com/mcp'}}
   }))
 
   mkdirSync(join(dir, 'tools'))
@@ -186,7 +186,7 @@ describe('validateProject', () => {
   it('passes with OAuth-format .mcp.json', () => {
     setupValidProject(tmpDir)
     writeFileSync(join(tmpDir, '.mcp.json'), JSON.stringify({
-      mcpServers: {kobiton: {type: 'http', url: 'https://api-test-green.kobiton.com/mcp', oauth: {authServerMetadataUrl: 'https://api-test-green.kobiton.com/.well-known/oauth-authorization-server'}}}
+      mcpServers: {kobiton: {type: 'http', url: 'https://api-test-white.kobiton.com/mcp', oauth: {authServerMetadataUrl: 'https://api-test-white.kobiton.com/.well-known/oauth-authorization-server'}}}
     }))
     const {errors} = validateProject(tmpDir)
     expect(errors).toEqual([])
@@ -195,7 +195,7 @@ describe('validateProject', () => {
   it('passes with API-key-format .mcp.json', () => {
     setupValidProject(tmpDir)
     writeFileSync(join(tmpDir, '.mcp.json'), JSON.stringify({
-      mcpServers: {kobiton: {type: 'http', url: 'https://api-test-green.kobiton.com/mcp', headers: {Authorization: '${KOBITON_AUTH}'}}}
+      mcpServers: {kobiton: {type: 'http', url: 'https://api-test-white.kobiton.com/mcp', headers: {Authorization: '${KOBITON_AUTH}'}}}
     }))
     const {errors} = validateProject(tmpDir)
     expect(errors).toEqual([])
@@ -204,7 +204,7 @@ describe('validateProject', () => {
   it('passes with minimal-format .mcp.json', () => {
     setupValidProject(tmpDir)
     writeFileSync(join(tmpDir, '.mcp.json'), JSON.stringify({
-      mcpServers: {kobiton: {type: 'http', url: 'https://api-test-green.kobiton.com/mcp'}}
+      mcpServers: {kobiton: {type: 'http', url: 'https://api-test-white.kobiton.com/mcp'}}
     }))
     const {errors} = validateProject(tmpDir)
     expect(errors).toEqual([])
@@ -213,7 +213,7 @@ describe('validateProject', () => {
   it('fails when oauth block is missing authServerMetadataUrl', () => {
     setupValidProject(tmpDir)
     writeFileSync(join(tmpDir, '.mcp.json'), JSON.stringify({
-      mcpServers: {kobiton: {type: 'http', url: 'https://api-test-green.kobiton.com/mcp', oauth: {}}}
+      mcpServers: {kobiton: {type: 'http', url: 'https://api-test-white.kobiton.com/mcp', oauth: {}}}
     }))
     const {errors} = validateProject(tmpDir)
     expect(errors).toContainEqual(expect.stringContaining('oauth block missing authServerMetadataUrl'))
