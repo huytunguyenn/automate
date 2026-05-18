@@ -169,6 +169,14 @@ For CI/CD pipelines or headless environments that cannot open a browser, use API
 4. Reload your shell and restart your AI CLI.
 
 > **Note:** OAuth and API key auth cannot coexist in a single `.mcp.json`. The default OAuth config uses a `headers` block containing only `X-AI-Tool-Name`. The API key config adds `Authorization: ${KOBITON_AUTH}` to the same `headers` block. To switch, replace `.mcp.json` with the appropriate format.
+>
+> **Gemini CLI:** API key auth requires editing `gemini-extension.json` instead of `.mcp.json`. Add a `headers` block under `mcpServers.kobiton` with `"Authorization": "${KOBITON_AUTH}"`.
+>
+> **Codex CLI:** OAuth is the default. For CI/headless environments where a browser cannot open, switch to API key auth by adding an `env_http_headers` block to the installed plugin's `.mcp.json` at `~/.codex/.tmp/marketplaces/kobiton/.codex/.mcp.json` (or maintain a fork), then export `KOBITON_AUTH` in the shell that launches `codex`:
+>
+> ```json
+> "env_http_headers": { "Authorization": "KOBITON_AUTH" }
+> ```
 
 ## Getting Started
 
@@ -189,14 +197,6 @@ To verify everything is wired correctly, run the diagnostic:
 `/automate:doctor` is read-only. It checks the CLI installation (symlink + target), the credentials file, the active profile, and required fields, and prints actionable remediation hints for any failures.
 
 **CLI symlink install behavior across CLIs:** The `run-interactive-test` skill depends on a `~/.kobiton/bin/kobiton` symlink. On Claude Code and Codex CLI (which sets `CLAUDE_PLUGIN_ROOT` for hook compatibility), the symlink is recreated automatically by a SessionStart hook on every session start. On Gemini CLI (and any other CLI without that hook), `/automate:setup` installs the symlink as its first step — running setup once after install is enough.
->
-> **Gemini CLI:** API key auth requires editing `gemini-extension.json` instead of `.mcp.json`. Add a `headers` block under `mcpServers.kobiton` with `"Authorization": "${KOBITON_AUTH}"`.
->
-> **Codex CLI:** OAuth is the default. For CI/headless environments where a browser cannot open, switch to API key auth by adding an `env_http_headers` block to the installed plugin's `.mcp.json` at `~/.codex/.tmp/marketplaces/kobiton/.codex/.mcp.json` (or maintain a fork), then export `KOBITON_AUTH` in the shell that launches `codex`:
->
-> ```json
-> "env_http_headers": { "Authorization": "KOBITON_AUTH" }
-> ```
 
 ## What You Can Do
 
