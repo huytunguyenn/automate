@@ -36,15 +36,29 @@ case "$ARCH" in
   *)             echo "Unsupported architecture: $ARCH" >&2; exit 1 ;;
 esac
 
+# Rosetta workaround: on Apple Silicon, devs whose terminal is launched
+# under Rosetta see `uname -m=x86_64` even though the host is arm64.
+# macOS exposes `sysctl.proc_translated=1` in that case; a genuine
+# Intel Mac returns 0 (or errors when the key is missing). We coerce
+# ARCH=arm64 only when the Rosetta signal is positive — real Intel
+# Macs still fall through to the "Binary not found" path, matching
+# the current decision not to ship a darwin-x64 build.
+if [ "$PLATFORM" = "darwin" ] && [ "$ARCH" = "x64" ]; then
+  if [ "$(sysctl -n sysctl.proc_translated 2>/dev/null)" = "1" ]; then
+    ARCH="arm64"
+  fi
+fi
+
 BINARY="$BIN_DIR/kobiton-${PLATFORM}-${ARCH}"
 if [ ! -f "$BINARY" ]; then
   cat >&2 <<EOF
 Error: kobiton CLI binary not found for ${PLATFORM}-${ARCH}.
 Expected at: $BINARY
 
-The bundled binary currently supports macOS Apple Silicon only
-(darwin-arm64). Other skills (run-automation-suite) and all MCP
-tools do not depend on this binary and are unaffected.
+The bundled binary currently supports macOS Apple Silicon
+(darwin-arm64) and Linux x64 (linux-x64). Other skills
+(run-automation-suite) and all MCP tools do not depend on this
+binary and are unaffected.
 EOF
   exit 1
 fi

@@ -21,7 +21,7 @@ Every command is self-contained — no env vars to manage between calls:
 
 Run `/automate:setup` once before first use. It installs the CLI wrapper symlink at `~/.kobiton/bin/kobiton` (if not already in place via the SessionStart hook) and writes credentials to `~/.kobiton/.credentials`.
 
-**Platform support:** the bundled CLI binary currently supports **macOS Apple Silicon (darwin-arm64) only**. On other platforms the first command fails with "Binary not found". If the user is on Linux or macOS Intel, do not invoke this skill — recommend `run-automation-suite` or the MCP tools instead, which are platform-independent.
+**Platform support:** the bundled CLI binary supports **macOS Apple Silicon (darwin-arm64)** and **Linux x64 (linux-x64)**. On unsupported platforms (macOS Intel, Linux arm64, Windows) the first command fails with "Binary not found". If the user is on an unsupported platform, do not invoke this skill — recommend `run-automation-suite` or the MCP tools instead, which are platform-independent.
 
 If a command fails with a credentials error or missing-binary error, direct the user to run `/automate:doctor` for diagnostics, then `/automate:setup` to repair.
 
