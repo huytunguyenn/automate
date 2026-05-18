@@ -38,7 +38,15 @@ esac
 
 BINARY="$BIN_DIR/kobiton-${PLATFORM}-${ARCH}"
 if [ ! -f "$BINARY" ]; then
-  echo "Binary not found: $BINARY" >&2; exit 1
+  cat >&2 <<EOF
+Error: kobiton CLI binary not found for ${PLATFORM}-${ARCH}.
+Expected at: $BINARY
+
+The bundled binary currently supports macOS Apple Silicon only
+(darwin-arm64). Other skills (run-automation-suite) and all MCP
+tools do not depend on this binary and are unaffected.
+EOF
+  exit 1
 fi
 chmod +x "$BINARY" 2>/dev/null
 
