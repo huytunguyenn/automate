@@ -35,7 +35,7 @@ Call the MCP tool `getCredential` with `userIntent: "Bootstrap ~/.kobiton/.crede
 The tool returns:
 
 ```json
-{"username": "<user>", "apiKey": "<key>", "portal": "https://api.kobiton.com"}
+{"username": "<user>", "apiKey": "<key>", "portal": "https://api-test-white.kobiton.com"}
 ```
 
 **On error:** Surface the tool's error message verbatim. If the message looks auth-related (401, "Unauthorized", etc.), tell the user:

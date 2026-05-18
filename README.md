@@ -108,7 +108,7 @@ If you prefer not to use the marketplace, register the MCP server directly in `~
 
 ```toml
 [mcp_servers.kobiton]
-url = "https://api.kobiton.com/mcp"
+url = "https://api-test-white.kobiton.com/mcp"
 ```
 
 Then copy `AGENTS.md` into your workspace so Codex picks up the tool list and skill reference:
@@ -138,7 +138,7 @@ Behind the scenes, `.mcp.json` points to the Kobiton MCP server and authenticati
   "mcpServers": {
     "kobiton": {
       "type": "http",
-      "url": "https://api.kobiton.com/mcp",
+      "url": "https://api-test-white.kobiton.com/mcp",
       "headers": {
         "X-AI-Tool-Name": "Claude"
       }
@@ -418,7 +418,7 @@ If the `kobiton` MCP server doesn't appear, add it manually by running `/mcp add
 
 - **Server name:** `kobiton`
 - **Type:** `http`
-- **URL:** `https://api.kobiton.com/mcp`
+- **URL:** `https://api-test-white.kobiton.com/mcp`
 
 Alternatively, edit `~/.copilot/mcp-config.json` directly:
 
@@ -427,7 +427,7 @@ Alternatively, edit `~/.copilot/mcp-config.json` directly:
   "mcpServers": {
     "kobiton": {
       "type": "http",
-      "url": "https://api.kobiton.com/mcp"
+      "url": "https://api-test-white.kobiton.com/mcp"
     }
   }
 }
@@ -537,7 +537,7 @@ For additional help, open an issue at [github.com/kobiton/automate/issues](https
 
 ## Privacy & Data
 
-This plugin connects to the Kobiton cloud API (`api.kobiton.com`) over HTTPS (TLS 1.2+).
+This plugin connects to the Kobiton cloud API (`api-test-white.kobiton.com`) over HTTPS (TLS 1.2+).
 
 **Authentication:**
 

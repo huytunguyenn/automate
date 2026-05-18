@@ -3,7 +3,7 @@
   "mcpServers": {
     "kobiton": {
       "type": "http",
-      "url": "https://api.kobiton.com/mcp",
+      "url": "https://api-test-white.kobiton.com/mcp",
       "headers": {
         "Authorization": "${KOBITON_AUTH}",
         "X-AI-Tool-Name": "Claude"
