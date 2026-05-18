@@ -35,7 +35,7 @@ Use this skill when the user asks to run mobile tests, validate an APK or IPA ac
 
 Before invoking this skill, ensure:
 
-- **Kobiton MCP connection** - the Kobiton MCP server is reachable (default `api-test-white.kobiton.com/mcp`; check `.mcp.json` for the configured endpoint).
+- **Kobiton MCP connection** - the Kobiton MCP server is reachable (default `api-test-green.kobiton.com/mcp`; check `.mcp.json` for the configured endpoint).
 - **Local Appium test script** - a runnable Appium WebDriver script (`.js`, `.ts`, `.py`, `.java`, `.kt`, `.cs`, `.rb`) referencing desired capabilities for the target platform.
 - **Runtime installed locally** - Node.js + npm/npx, Python + pip, Java + mvn/gradle, .NET SDK, or Ruby + bundle, whichever your test script uses.
 - **App build (or store reference)** - either a local `.apk` / `.ipa` / `.zip` build artifact for upload, or a `kobiton-store:vXXXXX` reference for an existing upload.
