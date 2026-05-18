@@ -4,10 +4,10 @@
 # Usage:
 #   scripts/swap-env.sh <from> <to>
 #
-# Examples:
-#   scripts/swap-env.sh test-white test-green   # api-test-white.kobiton.com -> api-test-green.kobiton.com
-#   scripts/swap-env.sh test-green ''           # api-test-green.kobiton.com -> api.kobiton.com (back to prod)
-#   scripts/swap-env.sh '' test-green           # api.kobiton.com -> api-test-green.kobiton.com
+# Examples (read "X" as the host slug, not a literal):
+#   scripts/swap-env.sh test-white test-green   # api-test-X.kobiton.com: white -> green
+#   scripts/swap-env.sh test-green ''           # api-test-X.kobiton.com -> api.kobiton.com (back to prod)
+#   scripts/swap-env.sh '' test-green           # api.kobiton.com -> api-test-X.kobiton.com
 #
 # An empty <from> or <to> means production (`api.kobiton.com`, no env slug).
 #
@@ -50,7 +50,8 @@ FILES=()
 while IFS= read -r -d '' f; do
   FILES+=("$f")
 done < <(git grep -lz --fixed-strings "$FROM_HOST" -- \
-  '*.json' '*.js' '*.md' '*.yaml' '*.yml' '*.toml' '*.sh' || true)
+  '*.json' '*.js' '*.md' '*.yaml' '*.yml' '*.toml' '*.sh' \
+  ':!scripts/swap-env.sh' || true)
 
 if [ "${#FILES[@]}" -eq 0 ]; then
   echo "No files reference $FROM_HOST"
