@@ -89,7 +89,7 @@ const templateVars = {
   deviceGroup: 'ORGANIZATION',
   showDeviceGroup: false,
 
-  // Resolved above (CLI > env > 'Claude' default)
+  // Resolved above (CLI flag > env > runtime marker, empty string when none match)
   aiToolName
 }
 

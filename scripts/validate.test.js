@@ -53,12 +53,6 @@ function setupValidProject(dir) {
     description: 'Test',
     mcpServers: {kobiton: {httpUrl: 'https://api.kobiton.com/mcp'}}
   }))
-  writeFileSync(join(dir, 'gemini-extension.json'), JSON.stringify({
-    name: 'kobiton-automate',
-    version: '1.0.2',
-    description: 'Test',
-    mcpServers: {kobiton: {httpUrl: 'https://api.kobiton.com/mcp'}}
-  }))
 
   mkdirSync(join(dir, 'tools'))
   for (const file of ['devices.yaml', 'sessions.yaml', 'apps.yaml', 'user.yaml']) {
