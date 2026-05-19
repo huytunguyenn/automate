@@ -1,37 +1,78 @@
 ---
 name: run-interactive-test
-description: Perform interactive testing on Kobiton devices using natural language. Translates user intents into CLI commands — WebDriver actions (find elements, type, click, swipe), device operations (adb shell, logs, screen capture, port forwarding), file management (push/pull), app management, and test execution. Use this skill whenever the user wants to interact with a mobile device on Kobiton, run exploratory tests, inspect device state, manage files on a device, or execute test sessions — even if they don't say "interactive test" explicitly.
+description: >-
+  Perform interactive testing on Kobiton devices using natural language.
+  Translates user intents into CLI commands - WebDriver actions (find
+  elements, type, click, swipe), device operations (adb shell, screen
+  capture, port forwarding), file management (push/pull), app
+  management, and test execution. Use when the user wants to interact
+  with a mobile device on Kobiton, run exploratory tests, inspect device
+  state, manage files on a device, or execute test sessions - even if
+  they don't say "interactive test" explicitly. Trigger with "interact
+  with kobiton device", "explore on kobiton", or "tap/swipe on device".
+allowed-tools: >-
+  Read, Edit,
+  Bash(~/.kobiton/bin/kobiton:*),
+  Bash(mkdir:*), Bash(date:*), Bash(base64:*), Bash(echo:*),
+  Bash(cat:*), Bash(grep:*), Bash(head:*), Bash(tail:*),
+  Bash(jq:*), Bash(xmllint:*),
+  Bash(open:*), Bash(xdg-open:*)
+version: 1.0.0
+author: Kobiton Inc.
+license: MIT
+compatibility: >-
+  Requires the bundled Kobiton CLI binary. Currently supports macOS Apple
+  Silicon (darwin-arm64) only - on other platforms, use run-automation-suite
+  or the Kobiton MCP tools directly. Run /automate:setup once before first
+  use to install the CLI wrapper symlink and write credentials.
+tags: [mobile, testing, interactive, webdriver, devices, kobiton]
 ---
 
-## How It Works
+# Run Interactive Test
 
-All commands go through a single wrapper script that automatically handles:
-- Platform-specific binary resolution
-- Portal URL (from `KOBITON_PORTAL` in credentials, or derived from `.mcp.json` as fallback)
-- Credentials (loaded from `~/.kobiton/.credentials` using AWS-style profiles)
-- Session token (loaded by the CLI from `~/.kobiton/.session`)
+## Overview
 
-Every command is self-contained — no env vars to manage between calls:
+Drive a Kobiton device interactively from natural-language intent. Given a request like "find the Login button and tap it" or "pull the latest log file from this Pixel", this skill creates (or resumes) a session, translates the intent into the right CLI command - WebDriver action, `adb shell`, file transfer, app launch, test run - captures the response, saves artifacts (screenshots, page source) under the workspace, and reports back in plain language.
 
-    ~/.kobiton/bin/kobiton <cli-args>
-
-`$KOBITON_BIN` is used as shorthand throughout this document. In every Bash command, substitute it with the literal path `~/.kobiton/bin/kobiton` — the variable does not persist between Bash calls.
+Use this skill whenever the user wants to interact with a mobile device on Kobiton, run exploratory tests, inspect device state, manage files on a device, or execute test sessions — even if they don't say "interactive test" explicitly.
 
 ## Prerequisites
 
-Run `/automate:setup` once before first use. It installs the CLI wrapper symlink at `~/.kobiton/bin/kobiton` (if not already in place via the SessionStart hook) and writes credentials to `~/.kobiton/.credentials`.
+Before invoking this skill, ensure:
 
-**Platform support:** the bundled CLI binary supports **macOS Apple Silicon (darwin-arm64)** and **Linux x64 (linux-x64)**. On unsupported platforms (macOS Intel, Linux arm64, Windows) the first command fails with "Binary not found". If the user is on an unsupported platform, do not invoke this skill — recommend `run-automation-suite` or the MCP tools instead, which are platform-independent.
+- **Bundled Kobiton CLI** - `~/.kobiton/bin/kobiton` (a symlink to this plugin's `run.sh` wrapper) must exist and point at an executable. On Claude Code and Codex CLI it's recreated automatically by a SessionStart hook. On other CLIs (e.g., Gemini) run `/automate:setup` once to install it. The bundled binary currently supports **macOS Apple Silicon (darwin-arm64) only** - on Linux or macOS Intel, do not invoke this skill; recommend `run-automation-suite` or the MCP tools instead, which are platform-independent.
+- **Credentials file** - `~/.kobiton/.credentials` must contain a valid INI-formatted profile with `KOBITON_USER`, `KOBITON_API_KEY`, and `KOBITON_PORTAL`. Created by `/automate:setup`. The active profile is `$KOBITON_PROFILE` if set, otherwise `default`.
+- **Kobiton MCP connection** - useful for `listDevices` / `getDeviceStatus` calls when picking a device. Default `api.kobiton.com/mcp`; check `.mcp.json` for the configured endpoint.
+- **Kobiton account** - credentials with device access for the target platform (Android / iOS) and remaining session quota.
 
 If a command fails with a credentials error or missing-binary error, direct the user to run `/automate:doctor` for diagnostics, then `/automate:setup` to repair.
 
-## CLI Syntax
+## How It Works
+
+All CLI calls go through a single wrapper at `~/.kobiton/bin/kobiton` that automatically handles:
+
+- **Platform-specific binary resolution** - picks the right bundled binary for the host OS/arch.
+- **Portal URL** - from `KOBITON_PORTAL` in credentials, or derived from `.mcp.json` as fallback.
+- **Credentials** - loaded from `~/.kobiton/.credentials` using AWS-style profiles (`$KOBITON_PROFILE`, default `default`).
+- **Session token** - loaded by the CLI from `~/.kobiton/.session` once a session exists.
+
+Every command is self-contained - no env vars to manage between calls:
+
+    ~/.kobiton/bin/kobiton <cli-args>
+
+`$KOBITON_BIN` is used as shorthand throughout this document. In every Bash command, substitute it with the literal path `~/.kobiton/bin/kobiton` - the variable does not persist between Bash calls.
+
+## Conventions
+
+### Argument order
 
 Global flags must come **before** the subcommand:
 
     $KOBITON_BIN [global-flags] <subcommand> [subcommand-flags]
 
-### Discovering Commands
+Example: `$KOBITON_BIN -u <udid> session create` (NOT `$KOBITON_BIN session -u <udid> create`).
+
+### Help-first discovery
 
 The CLI has built-in help at every level. **Always check `--help` before running a command you haven't used before or when unsure about arguments:**
 
@@ -39,7 +80,7 @@ The CLI has built-in help at every level. **Always check `--help` before running
     $KOBITON_BIN session --help            # session create, ping, end
     $KOBITON_BIN session create --help     # show create flags and usage
     $KOBITON_BIN wd --help                 # webdriver post/get commands
-    $KOBITON_BIN device --help             # list, adb-shell, forward, ps, log, screen
+    $KOBITON_BIN device --help             # list, adb-shell, forward, ps, screen
     $KOBITON_BIN device adb-shell --help   # run adb shell commands on device
     $KOBITON_BIN file --help               # list, push, pull files on device
     $KOBITON_BIN file push --help          # push local file to device
@@ -48,53 +89,103 @@ The CLI has built-in help at every level. **Always check `--help` before running
     $KOBITON_BIN app --help                # app management commands
     $KOBITON_BIN app run --help            # show app run flags and usage
 
-**Rule: if a command fails with "unexpected argument" or "unknown flag", run `--help` on that command to discover the correct syntax before retrying.** Do not guess — the help output is authoritative.
+**Rule:** if a command fails with "unexpected argument" or "unknown flag", run `--help` on that command to discover the correct syntax before retrying. Do not guess - the help output is authoritative.
 
-## Session Lifecycle
+### Artifacts storage
 
-### Create a session
+All session artifacts (screenshots, page source) **must** be saved under the current workspace at:
 
-Ask the user which device to target. Use the `listDevices` MCP tool to find available devices if needed.
+    .kobiton/sessions/<session-id>/
+
+This keeps artifacts organized per session, easy to review, and version-controllable. Never save artifacts to `/tmp/` or other locations outside the workspace.
+
+Before writing the first artifact in a session, ensure the directory exists with `mkdir -p .kobiton/sessions/<session-id>`. It's idempotent, so include it defensively whenever you're about to write — especially when resuming an existing session, where Instructions § 2 may have been skipped.
+
+## Instructions
+
+### 1. Pick a device
+
+Ask the user which device or platform to target. If they haven't specified one, call the MCP tool `listDevices` to surface available options, optionally filtered by platform / OS version.
+
+If the user already has a specific device in mind, confirm its availability with `getDeviceStatus` before proceeding.
+
+Capture both the **UDID** (used for session creation) and the device **id** (the separate numeric ID used to build portal launch URLs).
+
+### 2. Create or resume a session
+
+If there is no active session yet, create one:
 
     $KOBITON_BIN -u <udid> session create
 
-The CLI output includes the Kobiton session ID (e.g., `kobitonSessionId: 12345`). Capture it:
+The output contains a line like `kobitonSessionId: 12345`. Capture it:
 
-1. Parse the session ID from the output
-2. Create the artifacts directory: `mkdir -p .kobiton/sessions/<session-id>`
-3. Store the session ID for use in screenshot and page source commands
+1. Parse the session ID from the output.
+2. Create the artifacts directory: `mkdir -p .kobiton/sessions/<session-id>`.
+3. Store the session ID for use in screenshot and page source commands.
 
-The JWT is saved automatically to `~/.kobiton/.session`. All subsequent commands use it — no flags needed.
+The JWT is saved automatically to `~/.kobiton/.session`. All subsequent commands use it - no flags needed.
 
-### Check if a session exists
+If a session may already exist (e.g., the user is continuing earlier work), check first:
 
     $KOBITON_BIN session ping
 
-If it succeeds, the session is still active. If it fails, create a new one.
+Exit code 0 → session alive, reuse it. Non-zero → expired; create a fresh one.
 
-### End a session
+### 3. Interact with the device
+
+Translate the user's natural-language intent into one or more CLI commands using the [Command Reference](#command-reference) below.
+
+For each command:
+
+1. Run it via Bash using the literal path `~/.kobiton/bin/kobiton`.
+2. Parse the response (JSON envelope, plain text, or exit code) to extract values - see [Output § Per-command response shapes](#per-command-response-shapes).
+3. Report results in plain language to the user.
+
+**Chaining.** Multi-step intents require chaining the output of one command into the next. Example - "find the Name field and type Hello":
+
+1. Find the element:
+
+       $KOBITON_BIN wd post element '{"using":"id","value":"com.app:id/etName"}'
+
+   The response is JSON; extract the element ID from the `value` field.
+
+2. Type into it (substituting the captured element ID):
+
+       $KOBITON_BIN wd post element/<ELEMENT_ID>/value '{"text":"Hello"}'
+
+Always extract the element ID from the response before using it in subsequent commands. Element IDs **do not survive page transitions** - re-find on each new screen instead of caching.
+
+### 4. Capture artifacts
+
+Ensure the artifacts directory exists first (idempotent, safe to repeat):
+
+    mkdir -p .kobiton/sessions/<session-id>
+
+**Screenshot.** The CLI emits the base64-encoded PNG directly on stdout; decode and save in one pipe:
+
+    $KOBITON_BIN wd get screenshot \
+      | base64 -d \
+      > .kobiton/sessions/<session-id>/screenshot-$(date +%s).png
+
+Then use the `Read` tool on the saved file to display it inline, and report the file path to the user.
+
+**Page source.** The CLI emits raw XML (Android UIAutomator2) or hierarchy markup (iOS XCUITest) on stdout:
+
+    $KOBITON_BIN wd get source > .kobiton/sessions/<session-id>/source-$(date +%s).xml
+
+Read the saved file for element inspection, or use `grep` / `xmllint` to extract specific nodes (see [Example 3](#example-3-inspection-only---dump-page-source-list-clickable-elements-android)).
+
+### 5. End the session
+
+When the user is done:
 
     $KOBITON_BIN session end
 
-## Command Execution
-
-When the user describes what they want in natural language:
-
-1. Translate the intent to one or more commands using the reference below
-2. Run each command via Bash using `$KOBITON_BIN` (the global CLI wrapper)
-3. Parse JSON responses to extract values (e.g., element IDs)
-4. Report results in plain language
-
-### Chaining
-
-Multi-step intents require chaining. Example: "find the Name field and type Hello"
-
-1. `$KOBITON_BIN wd post element '{"using":"id","value":"com.app:id/etName"}'` — extract `ELEMENT_ID` from the `value` field in the JSON response
-2. `$KOBITON_BIN wd post element/$ELEMENT_ID/value '{"text":"Hello"}'`
-
-Always extract the element ID from the response before using it in subsequent commands.
+This terminates the Kobiton-side session and frees the device. The local artifacts directory at `.kobiton/sessions/<session-id>/` is preserved for later review and version control.
 
 ## Command Reference
+
+### WebDriver commands
 
 | Intent | Command |
 |--------|---------|
@@ -120,33 +211,13 @@ Always extract the element ID from the response before using it in subsequent co
 | Press home (Android) | `$KOBITON_BIN wd post execute '{"script":"mobile: pressKey","args":{"keycode":3}}'` |
 | Ping session | `$KOBITON_BIN session ping` |
 
-### Artifacts Storage
+### Beyond WebDriver
 
-All session artifacts (screenshots, page source) **must** be saved under the current workspace directory at `.kobiton/sessions/<session-id>/`. This keeps artifacts organized per session, easy to review, and version-controllable. Never save artifacts to `/tmp/` or other locations outside the workspace.
-
-### Screenshot Handling
-
-When taking a screenshot:
-
-1. Run `$KOBITON_BIN wd get screenshot` — returns base64 string
-2. Save to workspace: `echo "<base64>" | base64 -d > .kobiton/sessions/<session-id>/screenshot-$(date +%s).png`
-3. Read the saved file to display it, and report the file path to the user
-
-### Page Source Handling
-
-When capturing page source (for debugging or element inspection):
-
-1. Save to workspace: `$KOBITON_BIN wd get source > .kobiton/sessions/<session-id>/source-$(date +%s).xml`
-2. Read the saved file for element inspection
-
-## Beyond WebDriver
-
-The CLI supports more than WebDriver commands. These require an active session. Use `--help` to discover exact flags before running.
+These commands require an active session. Run `$KOBITON_BIN <command> --help` to discover the exact flags before using them - argument order and required flags vary.
 
 | Domain | Command | What it does |
 |--------|---------|-------------|
 | Device | `$KOBITON_BIN device adb-shell <command>` | Run adb shell command on device |
-| Device | `$KOBITON_BIN device log` | Stream device logs |
 | Device | `$KOBITON_BIN device screen` | Capture device screen as jpg |
 | Device | `$KOBITON_BIN device forward <local> <remote>` | Forward local port to device |
 | Device | `$KOBITON_BIN device ps` | List processes on device |
@@ -156,13 +227,158 @@ The CLI supports more than WebDriver commands. These require an active session. 
 | App | `$KOBITON_BIN app run <app-id>` | Launch an app |
 | Test | `$KOBITON_BIN test run` | Execute a test session |
 
-Always run `$KOBITON_BIN <command> --help` for the specific subcommand before using it — argument order and required flags vary.
+## Output
+
+The skill produces two kinds of output: **per-command responses** that Claude parses inline during the session, and **persistent session artifacts** that accumulate on disk and remain after the session ends.
+
+### Per-command response shapes
+
+| Command | Response on stdout | How to read |
+|---|---|---|
+| `wd post element` (find) | JSON envelope; the element ID lives under `.value` (W3C/Appium standard - may be `.value.ELEMENT` or `.value["element-6066-11e4-a52e-4f735466cecf"]` or a bare string) | Extract with `jq -r '.value.ELEMENT // .value["element-6066-11e4-a52e-4f735466cecf"] // .value'`, or pattern-match the string |
+| `wd post element/<id>/click`, `.../value`, `.../clear`, `wd post orientation`, `wd post url`, `wd post actions`, `wd post execute` | JSON envelope `{"value": <result>}`; usually `null` on success | Treat null/empty `.value` as success; surface a non-null `.value` (e.g., script return) to the user |
+| `wd get element/<id>/text`, `wd get url`, `wd get orientation` | JSON `{"value":"<string>"}` | `.value` is the requested string |
+| `wd get window/rect` | JSON `{"value":{"width":<n>,"height":<n>,"x":<n>,"y":<n>}}` | Use `.value.width` etc. |
+| `wd get screenshot` | Base64-encoded PNG (CLI unwraps the WebDriver JSON for you) | Pipe through `base64 -d` straight into a `.png` file |
+| `wd get source` | Raw XML / hierarchy markup (CLI unwraps the WebDriver JSON for you) | Redirect straight into a `.xml` file |
+| `session create` | Text on stdout with key/value lines, including `kobitonSessionId: <id>` | `grep` or string-match the `kobitonSessionId:` line |
+| `session ping` | Exit code 0 = alive, non-zero = expired | Trust exit status; don't parse stdout |
+| `session end` | Text confirmation | No parsing needed |
+| `device adb-shell <cmd>` | Raw stdout from the adb command | Same as running `adb shell <cmd>` locally |
+| `device screen` | JPEG image bytes - check `--help` for output flag (e.g., `--out`) | Redirect or use the documented output flag |
+| `device forward`, `device ps`, `file list` | Plain text on stdout | Read directly |
+| `file push`, `file pull` | Text confirmation; non-zero exit on failure | Surface failures by exit code |
+| `app run <app-id>` | Text confirmation; the app launches on the device | Continue interacting after launch |
+| `test run` | Streaming test-runner output | Run with `run_in_background: true`; parse the final summary block |
+
+### Persistent session artifacts
+
+After (and during) a session, the workspace and home directory contain:
+
+- **`.kobiton/sessions/<session-id>/screenshot-<unix-ts>.png`** - every screenshot captured during the session, named by Unix timestamp so they sort chronologically.
+- **`.kobiton/sessions/<session-id>/source-<unix-ts>.xml`** - every page-source dump captured during the session.
+- **`~/.kobiton/.session`** - the JWT for the most recently created session. The CLI uses this implicitly; treat it as opaque. It's overwritten by the next `session create`.
+
+The Kobiton portal also hosts a live session view at:
+
+    <portal-base>/sessions/<session-id>
+
+Where `<portal-base>` is derived from the `KOBITON_PORTAL` value in the active profile by replacing the `api` host prefix with `portal` (e.g., `https://api.kobiton.com` → `https://portal.kobiton.com`, `https://api-test.kobiton.com` → `https://portal-test.kobiton.com`). Surface this URL when summarizing a finished session so the user can review the recorded video and logs.
 
 ## Error Handling
 
 - **Unexpected argument / unknown flag**: run `$KOBITON_BIN <command> --help` to discover the correct syntax, then retry with the right arguments. Never guess flags.
-- **Session create failed**: device may be offline, already reserved, or UDID is wrong — verify the device is available with the `listDevices` MCP tool before retrying
-- **Session expired**: `session ping` or command returns auth error — offer to create a new session
-- **Element not found**: suggest getting page source first (`wd get source`) to inspect the UI hierarchy, then try a different locator strategy
-- **Binary not found**: run.sh failed — tell user their platform is not supported
+- **Session create failed**: device may be offline, already reserved, or the UDID is wrong - verify availability with the `listDevices` MCP tool before retrying.
+- **Session expired / auth error mid-flow**: `session ping` fails or a command returns auth error - offer to create a new session.
+- **Element not found**: suggest getting page source first (`wd get source`) to inspect the UI hierarchy, then try a different locator strategy (xpath instead of id, or vice versa).
+- **Stale element reference** after navigation: re-find the element on the new screen; element IDs do not survive page transitions.
+- **Binary not found**: `run.sh` failed to resolve a bundled binary for the host platform - tell the user their platform is not supported and recommend `run-automation-suite` or the MCP tools.
 - **Missing credentials**: direct the user to run `/automate:doctor` first to see what's missing; if the credentials file is missing or incomplete, run `/automate:setup` to fetch and write fresh credentials.
+
+## Examples
+
+### Example 1: Open Settings → Display → screenshot (Android)
+
+> "Take an Android Pixel device, open the Settings app, tap Display, then screenshot what's on screen."
+
+The skill walks through:
+
+1. Query MCP `listDevices` filtered to Android Pixel and pick the first AVAILABLE one - say UDID `9B211FFAZ0017F`, device id `4218`.
+2. Create the session:
+
+       ~/.kobiton/bin/kobiton -u 9B211FFAZ0017F session create
+
+   Output includes `kobitonSessionId: 12345`. Capture it.
+
+3. Prepare the workspace:
+
+       mkdir -p .kobiton/sessions/12345
+
+4. Press Home (in case another app was foregrounded), then launch Settings:
+
+       ~/.kobiton/bin/kobiton wd post execute \
+         '{"script":"mobile: pressKey","args":{"keycode":3}}'
+       ~/.kobiton/bin/kobiton app run com.android.settings
+
+5. Find the "Display" row by visible text:
+
+       ~/.kobiton/bin/kobiton wd post element \
+         '{"using":"xpath","value":"//*[@text=\"Display\"]"}'
+
+   Response is a JSON envelope; extract the element ID from `.value` (see [Output table](#per-command-response-shapes) for exact path).
+
+6. Click it (substituting the captured `ELEMENT_ID`):
+
+       ~/.kobiton/bin/kobiton wd post element/<ELEMENT_ID>/click '{}'
+
+7. Capture the screenshot:
+
+       ~/.kobiton/bin/kobiton wd get screenshot \
+         | base64 -d \
+         > .kobiton/sessions/12345/screenshot-$(date +%s).png
+
+8. Read the file with the `Read` tool to display it inline, then report:
+
+   > "Done. Screenshot saved to `.kobiton/sessions/12345/screenshot-1747612345.png`. Live session: `https://portal.kobiton.com/sessions/12345`."
+
+9. If the user is finished, end the session:
+
+       ~/.kobiton/bin/kobiton session end
+
+### Example 2: Push a file, verify it landed, pull logs back (Android)
+
+> "Push `./test-data.json` to `/sdcard/Download/` on the Pixel I'm already using, verify with `ls`, then pull the latest `logs.txt` from the device back into my project."
+
+The skill walks through:
+
+1. Check whether the existing session is still alive:
+
+       ~/.kobiton/bin/kobiton session ping
+
+   Exit 0 → reuse it. Non-zero → create a new one as in Example 1.
+
+2. Push the file:
+
+       ~/.kobiton/bin/kobiton file push ./test-data.json /sdcard/Download/test-data.json
+
+3. Verify with adb shell:
+
+       ~/.kobiton/bin/kobiton device adb-shell ls -la /sdcard/Download/test-data.json
+
+   Expect a line like `-rw-rw---- 1 root sdcard_rw 1234 2026-05-19 09:30 /sdcard/Download/test-data.json`. Surface that line to the user.
+
+4. Pull logs into the workspace:
+
+       ~/.kobiton/bin/kobiton file pull /sdcard/logs.txt ./logs.txt
+
+5. Read `./logs.txt` and report a one-line summary plus the file path. Do **not** echo the entire log to chat - it's likely large; instead `head -50` it or grep for keywords the user cares about.
+
+### Example 3: Inspection-only - dump page source, list clickable elements (Android)
+
+> "What clickable things are on screen right now? Save the page source so I can grep it later."
+
+Assumes a session is already active (run `session ping` first; if expired, create a new one).
+
+1. Dump the source — ensure the artifacts directory exists first:
+
+       mkdir -p .kobiton/sessions/12345
+       ~/.kobiton/bin/kobiton wd get source \
+         > .kobiton/sessions/12345/source-$(date +%s).xml
+
+2. Extract clickable nodes - quick `grep` pass:
+
+       grep -oE 'clickable="true"[^/]{0,200}resource-id="[^"]+"' \
+         .kobiton/sessions/12345/source-*.xml \
+         | head -20
+
+   For a structured pass, use `xmllint --xpath '//*[@clickable="true"]/@resource-id' .kobiton/sessions/12345/source-*.xml` (Android) or an equivalent XPath for the iOS hierarchy markup.
+
+3. Report a deduplicated list of resource IDs (or fall back to `content-desc` / `text` for nodes that have no `resource-id`), and the path to the full XML for further inspection.
+
+## Resources
+
+- [Appium 2.x documentation](https://appium.io/docs/en/2.0/) - driver-specific docs (UiAutomator2 for Android, XCUITest for iOS) for the WebDriver endpoints called via `wd post` / `wd get`.
+- [`kobiton/automate` plugin source](https://github.com/kobiton/automate) - issue tracker and source for the bundled CLI wrapper (`skills/run-interactive-test/scripts/run.sh`) and platform binaries.
+- [`run-automation-suite`](../run-automation-suite/SKILL.md) - sister skill for non-interactive runs of an existing Appium script. Use it when the user wants to execute a full test suite rather than drive the device step-by-step, or when the host platform isn't supported by this skill's bundled binary.
+- `/automate:setup` - install / refresh the CLI symlink and the credentials profile at `~/.kobiton/.credentials`.
+- `/automate:doctor` - read-only health check for CLI symlink, credentials file, active profile, and required fields.
