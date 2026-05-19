@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "kobiton": {
+    "kobiton-local": {
       "url": "https://api-test-white.kobiton.com/mcp",
       "http_headers": {
         "X-AI-Tool-Name": "Codex"

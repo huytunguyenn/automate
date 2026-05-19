@@ -117,7 +117,7 @@ if [ -z "${KOBITON_PORTAL:-}" ]; then
   if [ -f "$MCP_FILE" ]; then
     MCP_URL=$(MCP_FILE="$MCP_FILE" node -e "
       const m=JSON.parse(require('fs').readFileSync(process.env.MCP_FILE,'utf8'));
-      const s=m.mcpServers?.kobiton;
+      const s=m.mcpServers?.['kobiton-local'];
       console.log(s?.url || '');
     " 2>/dev/null || true)
     if [ -n "$MCP_URL" ]; then
