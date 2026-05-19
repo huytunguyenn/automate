@@ -11,7 +11,7 @@ Run each check below in sequence. Print one line per check using `✓` (pass) or
 
 For each `✗`, also print an indented remediation hint on the following line (prefixed with `→ `).
 
-This command must NOT modify any files. The `~/.kobiton/bin/kobiton` symlink is created by the plugin's SessionStart hook on Claude Code / Codex CLI, or by `/automate:setup` on CLIs without that hook (e.g., Gemini) — not by this command.
+This command must NOT modify any files. The `~/.kobiton/bin/kobiton` symlink is created by the plugin's SessionStart hook on Claude Code, or by `/automate:setup` on CLIs without that hook (Codex CLI, Gemini CLI, GitHub Copilot CLI) — not by this command.
 
 ## Check 1: CLI installed
 
@@ -34,7 +34,7 @@ fi
 ```
 
 - `PASS:<target>` → print `✓ CLI installed (~/.kobiton/bin/kobiton → <target>)`
-- `FAIL:missing` → print `✗ CLI installed (~/.kobiton/bin/kobiton not found)` and `    → Run /automate:setup to install the symlink (or, on Claude Code / Codex CLI, restart the session — the SessionStart hook re-creates it on launch).`
+- `FAIL:missing` → print `✗ CLI installed (~/.kobiton/bin/kobiton not found)` and `    → Run /automate:setup to install the symlink (or, on Claude Code, restart the session — the SessionStart hook re-creates it on launch).`
 - `FAIL:not-a-symlink` → print `✗ CLI installed (~/.kobiton/bin/kobiton is not a symlink)` and the same hint.
 - `FAIL:bad-target:<t>` → print `✗ CLI installed (symlink target missing or not executable: <t>)` and the same hint.
 
