@@ -197,10 +197,11 @@ To verify everything is wired correctly, run the diagnostic:
 **CLI symlink install behavior across CLIs:** The `run-interactive-test` skill depends on a `~/.kobiton/bin/kobiton` symlink.
 
 - **Claude Code** — the symlink is recreated automatically by a SessionStart hook on every session start. Running `/automate:setup` also recreates it. No manual step needed.
-- **Codex CLI, Gemini CLI, GitHub Copilot CLI** — these CLIs don't load Claude-format slash commands, so `/automate:setup` is unavailable. Run the bundled installer script directly once after installing the plugin:
+- **GitHub Copilot CLI** — Copilot loads the same Claude-format slash commands, so run `/automate:setup` once after install to create the symlink. (Copilot has no SessionStart hook, so it isn't recreated automatically.)
+- **Codex CLI, Gemini CLI** — these CLIs use different command formats (Codex's plugin manifest has no `commands` field; Gemini uses a TOML command format we haven't authored), so `/automate:setup` is unavailable. Run the bundled installer script directly once after installing the plugin:
 
   ```bash
-  bash "$(find ~/.codex ~/.gemini ~/.copilot -name install-cli.sh -path '*automate*' 2>/dev/null | head -1)"
+  bash "$(find ~/.codex ~/.gemini -name install-cli.sh -path '*automate*' 2>/dev/null | head -1)"
   ```
 
   The script is idempotent — safe to re-run.
