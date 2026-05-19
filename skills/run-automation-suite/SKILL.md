@@ -105,8 +105,8 @@ The rendered output also includes `kobiton:aiToolName: "<host>"` so Kobiton can 
 3. Auto-detect from runtime markers, any non-empty value:
    - `CLAUDECODE` -> Claude
    - `COPILOT_CLI` -> Copilot
-   - `GEMINI_CLI` -> Gemini *(speculative; pass `--aiToolName Gemini` if Gemini CLI doesn't set this)*
-   - `CODEX_CLI` or `CODEX_THREAD_ID` -> Codex
+   - `GEMINI_CLI` -> Gemini
+   - `CODEX_THREAD_ID` (or `CODEX_CLI`) -> Codex — Codex CLI sets the thread ID, not a generic `CODEX_CLI` flag; the latter is accepted for manual override only
 4. If nothing matches, no `kobiton:aiToolName` capability is emitted.
 
 This capability is treated as **must-match** during reconciliation (see `references/capabilities.md`): if the rendered output includes `kobiton:aiToolName`, always overwrite any existing value in the user's script with it — a stale value from a prior session run under a different CLI would mis-attribute adoption analytics. If the rendered output omits the capability (no runtime marker matched), leave the user's value untouched.
