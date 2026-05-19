@@ -194,7 +194,17 @@ To verify everything is wired correctly, run the diagnostic:
 
 `/automate:doctor` is read-only. It checks the CLI installation (symlink + target), the credentials file, the active profile, and required fields, and prints actionable remediation hints for any failures.
 
-**CLI symlink install behavior across CLIs:** The `run-interactive-test` skill depends on a `~/.kobiton/bin/kobiton` symlink. On Claude Code, the symlink is recreated automatically by a SessionStart hook on every session start. On Codex CLI, Gemini CLI, and GitHub Copilot CLI, `/automate:setup` installs the symlink as its first step — running setup once after install is enough.
+**CLI symlink install behavior across CLIs:** The `run-interactive-test` skill depends on a `~/.kobiton/bin/kobiton` symlink.
+
+- **Claude Code** — the symlink is recreated automatically by a SessionStart hook on every session start. Running `/automate:setup` also recreates it. No manual step needed.
+- **GitHub Copilot CLI** — Copilot loads the same Claude-format slash commands, so run `/automate:setup` once after install to create the symlink. (Copilot has no SessionStart hook, so it isn't recreated automatically.)
+- **Codex CLI, Gemini CLI** — these CLIs use different command formats (Codex's plugin manifest has no `commands` field; Gemini uses a TOML command format we haven't authored), so `/automate:setup` is unavailable. Run the bundled installer script directly once after installing the plugin:
+
+  ```bash
+  bash "$(find ~/.codex ~/.gemini -name install-cli.sh -path '*automate*' 2>/dev/null | head -1)"
+  ```
+
+  The script is idempotent — safe to re-run.
 
 ## What You Can Do
 

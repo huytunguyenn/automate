@@ -2,11 +2,18 @@
 # Installs the ~/.kobiton/bin/kobiton symlink pointing at this plugin
 # version's run.sh wrapper. Idempotent - safe to invoke repeatedly.
 #
-# Called from two places:
-#   1. Claude Code's SessionStart hook (auto, every session)
-#   2. /automate:setup command (manual, one-off per install - needed
-#      for CLIs without a working SessionStart hook spec, i.e. Codex
-#      CLI, Gemini CLI, GitHub Copilot CLI)
+# Called from three places:
+#   1. Claude Code's SessionStart hook (auto, every session). The
+#      /automate:setup slash command also invokes it on demand.
+#   2. GitHub Copilot CLI via the /automate:setup slash command -
+#      Copilot loads the same Claude-format markdown commands, but
+#      has no SessionStart hook, so users run /automate:setup once
+#      after install.
+#   3. Direct bash invocation by users on Codex CLI and Gemini CLI -
+#      those CLIs use different command formats (Codex's plugin
+#      manifest has no `commands` field; Gemini uses TOML) and don't
+#      load this slash command, so users run this script via
+#      `bash <plugin-path>/scripts/install-cli.sh` once after install.
 #
 # Plugin root resolution: prefer CLAUDE_PLUGIN_ROOT if the host CLI
 # injected it; otherwise derive from this script's own location
