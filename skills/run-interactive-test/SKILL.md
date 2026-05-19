@@ -34,7 +34,7 @@ tags: [mobile, testing, interactive, webdriver, devices, kobiton]
 
 Drive a Kobiton device interactively from natural-language intent. Given a request like "find the Login button and tap it" or "pull the latest log file from this Pixel", this skill creates (or resumes) a session, translates the intent into the right CLI command - WebDriver action, `adb shell`, file transfer, app launch, test run - captures the response, saves artifacts (screenshots, page source) under the workspace, and reports back in plain language.
 
-Use this skill whenever the user wants to interact with a mobile device on Kobiton, run exploratory tests, inspect device state, manage files on a device, or execute test sessions — even if they don't say "interactive test" explicitly.
+Use this skill whenever the user wants to interact with a mobile device on Kobiton, run exploratory tests, inspect device state, manage files on a device, or execute test sessions - even if they don't say "interactive test" explicitly.
 
 ## Prerequisites
 
@@ -99,7 +99,9 @@ All session artifacts (screenshots, page source) **must** be saved under the cur
 
 This keeps artifacts organized per session, easy to review, and version-controllable. Never save artifacts to `/tmp/` or other locations outside the workspace.
 
-Before writing the first artifact in a session, ensure the directory exists with `mkdir -p .kobiton/sessions/<session-id>`. It's idempotent, so include it defensively whenever you're about to write — especially when resuming an existing session, where Instructions § 2 may have been skipped.
+**Workspace vs home.** This `.kobiton/` is **workspace-relative** (your CWD when running the skill) - do not confuse with `~/.kobiton/` in the user's home, which holds the CLI symlink, credentials, and session JWT (managed by `/automate:setup`). Workspace `.kobiton/` only contains per-session artifacts the skill creates.
+
+Before writing the first artifact in a session, ensure the directory exists with `mkdir -p .kobiton/sessions/<session-id>`. It's idempotent, so include it defensively whenever you're about to write - especially when resuming an existing session, where Instructions § 2 may have been skipped.
 
 ## Instructions
 
@@ -138,7 +140,7 @@ Translate the user's natural-language intent into one or more CLI commands using
 For each command:
 
 1. Run it via Bash using the literal path `~/.kobiton/bin/kobiton`.
-2. Parse the response (JSON envelope, plain text, or exit code) to extract values - see [Output § Per-command response shapes](#per-command-response-shapes).
+2. Parse the response (JSON envelope, plain text, or exit code) to extract values - see [Output § Per-command response shapes](#per-command-response-shapes) for the summary rules and [`references/response-shapes.md`](references/response-shapes.md) for the full per-command table.
 3. Report results in plain language to the user.
 
 **Chaining.** Multi-step intents require chaining the output of one command into the next. Example - "find the Name field and type Hello":
@@ -233,23 +235,15 @@ The skill produces two kinds of output: **per-command responses** that Claude pa
 
 ### Per-command response shapes
 
-| Command | Response on stdout | How to read |
-|---|---|---|
-| `wd post element` (find) | JSON envelope; the element ID lives under `.value` (W3C/Appium standard - may be `.value.ELEMENT` or `.value["element-6066-11e4-a52e-4f735466cecf"]` or a bare string) | Extract with `jq -r '.value.ELEMENT // .value["element-6066-11e4-a52e-4f735466cecf"] // .value'`, or pattern-match the string |
-| `wd post element/<id>/click`, `.../value`, `.../clear`, `wd post orientation`, `wd post url`, `wd post actions`, `wd post execute` | JSON envelope `{"value": <result>}`; usually `null` on success | Treat null/empty `.value` as success; surface a non-null `.value` (e.g., script return) to the user |
-| `wd get element/<id>/text`, `wd get url`, `wd get orientation` | JSON `{"value":"<string>"}` | `.value` is the requested string |
-| `wd get window/rect` | JSON `{"value":{"width":<n>,"height":<n>,"x":<n>,"y":<n>}}` | Use `.value.width` etc. |
-| `wd get screenshot` | Base64-encoded PNG (CLI unwraps the WebDriver JSON for you) | Pipe through `base64 -d` straight into a `.png` file |
-| `wd get source` | Raw XML / hierarchy markup (CLI unwraps the WebDriver JSON for you) | Redirect straight into a `.xml` file |
-| `session create` | Text on stdout with key/value lines, including `kobitonSessionId: <id>` | `grep` or string-match the `kobitonSessionId:` line |
-| `session ping` | Exit code 0 = alive, non-zero = expired | Trust exit status; don't parse stdout |
-| `session end` | Text confirmation | No parsing needed |
-| `device adb-shell <cmd>` | Raw stdout from the adb command | Same as running `adb shell <cmd>` locally |
-| `device screen` | JPEG image bytes - check `--help` for output flag (e.g., `--out`) | Redirect or use the documented output flag |
-| `device forward`, `device ps`, `file list` | Plain text on stdout | Read directly |
-| `file push`, `file pull` | Text confirmation; non-zero exit on failure | Surface failures by exit code |
-| `app run <app-id>` | Text confirmation; the app launches on the device | Continue interacting after launch |
-| `test run` | Streaming test-runner output | Run with `run_in_background: true`; parse the final summary block |
+The common parsing patterns:
+
+- **Most WebDriver responses** are JSON envelopes `{"value": <result>}`. Null/empty `.value` means success; a non-null `.value` is the result (string, rect object, script return).
+- **Find element** (`wd post element`) hides the element ID under `.value`, but the exact path varies (`.value.ELEMENT`, `.value["element-6066-11e4-a52e-4f735466cecf"]`, or a bare string). Use a tolerant extractor like `jq -r '.value.ELEMENT // .value["element-6066-11e4-a52e-4f735466cecf"] // .value'`.
+- **Screenshot and page source** (`wd get screenshot`, `wd get source`) are special-cased — the CLI unwraps the WebDriver JSON envelope and emits raw base64 PNG / raw XML on stdout. Pipe straight into a file.
+- **Session commands** mix text + exit code. `session create` prints a `kobitonSessionId: <id>` line; `session ping` signals liveness through exit code (0 = alive).
+- **`device` / `file` / `app` / `test`** emit plain text and signal failure through exit code. Long-running ones (`test run`, future streaming commands) should be launched with `run_in_background: true` and tailed.
+
+For the full per-command table (response on stdout, exact parsing recipe per command), see [`references/response-shapes.md`](references/response-shapes.md). Consult it when the response shape isn't obvious from these summary rules.
 
 ### Persistent session artifacts
 
@@ -263,7 +257,7 @@ The Kobiton portal also hosts a live session view at:
 
     <portal-base>/sessions/<session-id>
 
-Where `<portal-base>` is derived from the `KOBITON_PORTAL` value in the active profile by replacing the `api` host prefix with `portal` (e.g., `https://api.kobiton.com` → `https://portal.kobiton.com`, `https://api-test.kobiton.com` → `https://portal-test.kobiton.com`). Surface this URL when summarizing a finished session so the user can review the recorded video and logs.
+Where `<portal-base>` is derived from the `KOBITON_PORTAL` value in the active profile by replacing the `api` host prefix with `portal` (e.g., `https://api.kobiton.com` -> `https://portal.kobiton.com`, `https://api-test.kobiton.com` -> `https://portal-test.kobiton.com`). Surface this URL when summarizing a finished session so the user can review the recorded video and logs.
 
 ## Error Handling
 
@@ -305,7 +299,7 @@ The skill walks through:
        ~/.kobiton/bin/kobiton wd post element \
          '{"using":"xpath","value":"//*[@text=\"Display\"]"}'
 
-   Response is a JSON envelope; extract the element ID from `.value` (see [Output table](#per-command-response-shapes) for exact path).
+   Response is a JSON envelope; extract the element ID from `.value` (see [`references/response-shapes.md`](references/response-shapes.md#webdriver-commands) for the exact extraction recipe).
 
 6. Click it (substituting the captured `ELEMENT_ID`):
 
@@ -359,7 +353,7 @@ The skill walks through:
 
 Assumes a session is already active (run `session ping` first; if expired, create a new one).
 
-1. Dump the source — ensure the artifacts directory exists first:
+1. Dump the source - ensure the artifacts directory exists first:
 
        mkdir -p .kobiton/sessions/12345
        ~/.kobiton/bin/kobiton wd get source \
