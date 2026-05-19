@@ -98,7 +98,18 @@ For web testing, replace `--app <app>` with `--browserName <browser> --testingTy
 
 Compare the JSON output against the parsed script capabilities using the [reconciliation rules](references/capabilities.md#reconciliation-rules): must-match fields are autocorrected to the rendered values, suggested defaults require user confirmation before changing, and user-controlled capabilities are left untouched.
 
-The rendered output also includes `kobiton:aiToolName: "<host>"` so Kobiton can attribute sessions started by this skill to the calling AI workspace in adoption analytics. The host is auto-detected from runtime env markers (`CLAUDECODE=1` → Claude, `COPILOT_CLI=1` → Copilot, `GEMINI_CLI=1` → Gemini, `CODEX_THREAD_ID` → Codex). Override with `--aiToolName <name>` or set `KOBITON_AI_TOOL_NAME=<name>` to force a specific value. Pass `--aiToolName ""` to omit the capability entirely.
+The rendered output also includes `kobiton:aiToolName: "<host>"` so Kobiton can attribute sessions started by this skill to the calling AI workspace in adoption analytics. Resolution order:
+
+1. `--aiToolName <name>` CLI flag (always wins; `""` opts out entirely)
+2. `KOBITON_AI_TOOL_NAME` env var (also accepts `""` to opt out)
+3. Auto-detect from runtime markers, any non-empty value:
+   - `CLAUDECODE` -> Claude
+   - `COPILOT_CLI` -> Copilot
+   - `GEMINI_CLI` -> Gemini *(speculative; pass `--aiToolName Gemini` if Gemini CLI doesn't set this)*
+   - `CODEX_CLI` or `CODEX_THREAD_ID` -> Codex
+4. If nothing matches, no `kobiton:aiToolName` capability is emitted.
+
+This capability is treated as **must-match** during reconciliation (see `references/capabilities.md`): always overwrite any existing `kobiton:aiToolName` in the user's script with the rendered value (or remove it if the rendered output omits the capability). A stale value from a prior session run under a different CLI would mis-attribute adoption analytics.
 
 ### 4. Confirm & execute
 
