@@ -120,6 +120,52 @@ curl -sLO https://raw.githubusercontent.com/kobiton/automate/main/AGENTS.md
 Launch `codex` and run `/mcp` to confirm. The OAuth flow still applies on the first tool call.
 </details>
 
+### Other MCP Clients
+
+The Kobiton MCP server (`https://api.kobiton.com/mcp`) speaks the open Model Context Protocol and can be consumed by any spec-compliant MCP client. The configs below are derived from each client's published documentation; the Kobiton-side OAuth flow is the same across all of them. **End-to-end tested only on Claude Code, Copilot CLI, Gemini CLI, and Codex CLI**; entries below are configs we expect to work but have not yet validated — please open an issue if any do not work for your setup.
+
+#### Cursor
+
+Cursor reads MCP servers from `.cursor/mcp.json` at the project root (or `~/.cursor/mcp.json` for global). This repo ships a default project-level config at [`.cursor/mcp.json`](.cursor/mcp.json):
+
+```json
+{
+  "mcpServers": {
+    "kobiton": {
+      "url": "https://api.kobiton.com/mcp"
+    }
+  }
+}
+```
+
+On first connection Cursor opens a browser for OAuth login (same flow as Claude Code's `/mcp` command). Cursor's fixed OAuth redirect URL is `cursor://anysphere.cursor-mcp/oauth/callback`. Reference: [cursor.com/docs/context/mcp](https://cursor.com/docs/context/mcp).
+
+#### ChatGPT (Apps SDK)
+
+ChatGPT consumes MCP servers via an HTTPS endpoint registered in ChatGPT developer mode. Point ChatGPT at:
+
+```
+https://api.kobiton.com/mcp
+```
+
+The Apps SDK does not require a separate manifest file; tool descriptors, OAuth flow, and `_meta.ui` widget hints flow through the MCP protocol itself. Reference: [developers.openai.com/apps-sdk/build/mcp-server](https://developers.openai.com/apps-sdk/build/mcp-server).
+
+#### Continue / Cline / other generic MCP clients
+
+Most generic MCP clients support the open Streamable HTTP transport. Use a config block like:
+
+```json
+{
+  "mcpServers": {
+    "kobiton": {
+      "url": "https://api.kobiton.com/mcp"
+    }
+  }
+}
+```
+
+Adjust to your client's specific format. The server URL and OAuth handshake are the same; if your client doesn't support OAuth, fall back to the API-key auth path (see [API Key Authentication](#api-key-authentication-alternative) below) — most clients accept custom `headers` blocks.
+
 ## Login
 
 The first time your AI assistant calls a Kobiton tool, a browser window opens for OAuth login. Sign in with your Kobiton credentials — tokens are then managed automatically by the assistant.

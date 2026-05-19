@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Documented cross-client install paths for Cursor, ChatGPT (Apps SDK), and Continue / Cline / other generic MCP clients in README — adds an "Other MCP Clients" subsection under Installation. Ships a default `.cursor/mcp.json` at the repo root so Cursor users get a working config without hand-crafting one. Honest framing: configs derived from each client's published documentation; end-to-end-tested only on the four already-documented clients
+
 ## 1.2.0 - 2026-05-18
 
 - Multi-CLI support: install on GitHub Copilot CLI, Gemini CLI, and Codex CLI in addition to Claude Code
