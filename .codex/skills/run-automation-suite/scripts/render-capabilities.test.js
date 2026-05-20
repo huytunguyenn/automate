@@ -1,6 +1,6 @@
 import {describe, it, expect} from 'vitest'
-import {execFileSync} from 'child_process'
-import {resolve} from 'path'
+import {execFileSync} from 'node:child_process'
+import {resolve} from 'node:path'
 
 const SCRIPT = resolve(import.meta.dirname, 'render-capabilities.js')
 

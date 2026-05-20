@@ -1,7 +1,7 @@
-import {readFileSync} from 'fs'
-import {resolve} from 'path'
+import {readFileSync} from 'node:fs'
+import {resolve} from 'node:path'
+import {parseArgs} from 'node:util'
 import ejs from 'ejs'
-import {parseArgs} from 'util'
 
 const TEMPLATE_PATH = resolve(
   import.meta.dirname, '..', 'references', 'templates', 'appium.ejs'

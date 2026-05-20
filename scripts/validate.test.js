@@ -1,7 +1,7 @@
 import {describe, it, expect, beforeEach, afterEach} from 'vitest'
-import {mkdtempSync, mkdirSync, writeFileSync, rmSync} from 'fs'
-import {join} from 'path'
-import {tmpdir} from 'os'
+import {mkdtempSync, mkdirSync, writeFileSync, rmSync} from 'node:fs'
+import {join} from 'node:path'
+import {tmpdir} from 'node:os'
 import {validateProject} from './validate.js'
 
 function setupValidProject(dir) {
