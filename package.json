@@ -5,8 +5,10 @@
   "private": true,
   "description": "Kobiton plugin manifests, tool schemas, and skills for AI coding assistants",
   "scripts": {
-    "build": "node scripts/build-tool-definitions.js",
-    "validate": "node scripts/validate.js",
+    "build:codex": "node scripts/sync-codex-artifacts.js",
+    "build:tools": "node scripts/build-tool-definitions.js",
+    "build": "pnpm run build:tools && pnpm run build:codex",
+    "validate": "node scripts/validate.js && node scripts/sync-codex-artifacts.js --check",
     "test": "vitest run",
     "test:watch": "vitest"
   },
