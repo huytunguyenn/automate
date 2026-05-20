@@ -196,15 +196,16 @@ To verify everything is wired correctly, run the diagnostic:
 
 **CLI symlink install behavior across CLIs:** The `run-interactive-test` skill depends on a `~/.kobiton/bin/kobiton` symlink.
 
-- **Claude Code** — the symlink is recreated automatically by a SessionStart hook on every session start. Running `/automate:setup` also recreates it. No manual step needed.
+- **Claude Code, Codex CLI** — the symlink is recreated automatically by a bundled SessionStart hook on every session start. On Codex, the first session prompts you to trust the hook once via `/hooks`; subsequent sessions run it silently. Running `/automate:setup` (Claude) also recreates the symlink on demand.
 - **GitHub Copilot CLI, Gemini CLI** — both CLIs load `/automate:setup` (Copilot reads Claude-format Markdown commands; Gemini reads bundled TOML commands at `commands/automate/setup.toml`). Run `/automate:setup` once after install to create the symlink. Neither CLI has a SessionStart hook, so the symlink isn't recreated automatically — re-run setup if it goes missing.
-- **Codex CLI** — Codex's plugin manifest has no `commands` field, so `/automate:setup` is unavailable. Run the bundled installer script directly once after installing the plugin:
 
-  ```bash
-  bash "$(find ~/.codex -name install-cli.sh -path '*automate*' 2>/dev/null | head -1)"
-  ```
+Manual fallback — if the SessionStart hook was denied on Codex, or you need to install without an active session:
 
-  The script is idempotent — safe to re-run.
+```bash
+bash "$(find ~/.codex -name install-cli.sh -path '*automate*' 2>/dev/null | head -1)"
+```
+
+The script is idempotent — safe to re-run.
 
 ## What You Can Do
 

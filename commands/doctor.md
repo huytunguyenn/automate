@@ -11,7 +11,7 @@ Run each check below in sequence. Print one line per check using `✓` (pass) or
 
 For each `✗`, also print an indented remediation hint on the following line (prefixed with `→ `).
 
-This command must NOT modify any files. The `~/.kobiton/bin/kobiton` symlink is created by the plugin's SessionStart hook on Claude Code (or by `/automate:setup` on demand). GitHub Copilot CLI and Gemini CLI both load `/automate:setup` (Copilot via Claude-format `.md`, Gemini via the bundled TOML at `commands/automate/setup.toml`) but have no SessionStart hook, so users on those CLIs run `/automate:setup` once after install. Codex CLI doesn't load any plugin slash command — Codex users run `scripts/install-cli.sh` directly. This `/automate:doctor` command itself never modifies anything.
+This command must NOT modify any files. The `~/.kobiton/bin/kobiton` symlink is created by the plugin's SessionStart hook on Claude Code and Codex CLI (Codex prompts the user to trust the hook once via `/hooks` on first install), or by `/automate:setup` on demand. GitHub Copilot CLI and Gemini CLI both load `/automate:setup` (Copilot via Claude-format `.md`, Gemini via the bundled TOML at `commands/automate/setup.toml`) but have no SessionStart hook, so users on those CLIs run `/automate:setup` once after install. This `/automate:doctor` command itself never modifies anything.
 
 ## Check 1: CLI installed
 
@@ -34,7 +34,7 @@ fi
 ```
 
 - `PASS:<target>` → print `✓ CLI installed (~/.kobiton/bin/kobiton → <target>)`
-- `FAIL:missing` → print `✗ CLI installed (~/.kobiton/bin/kobiton not found)` and `    → Run /automate:setup to install the symlink (on Claude Code, restarting the session also re-creates it via the SessionStart hook). On Codex CLI — which doesn't load this slash command — run the bundled installer directly: bash "$(find ~/.codex -name install-cli.sh -path '*automate*' 2>/dev/null | head -1)".`
+- `FAIL:missing` → print `✗ CLI installed (~/.kobiton/bin/kobiton not found)` and `    → Run /automate:setup to install the symlink. On Claude Code and Codex CLI, restarting the session re-creates it via the bundled SessionStart hook (Codex requires trusting the hook once via /hooks). If the hook was denied or you need to install without an active session, fall back to: bash "$(find ~/.codex -name install-cli.sh -path '*automate*' 2>/dev/null | head -1)".`
 - `FAIL:not-a-symlink` → print `✗ CLI installed (~/.kobiton/bin/kobiton is not a symlink)` and the same hint.
 - `FAIL:bad-target:<t>` → print `✗ CLI installed (symlink target missing or not executable: <t>)` and the same hint.
 

@@ -14,6 +14,14 @@ function setupFixture(root) {
   mkdirSync(join(root, 'assets'))
   writeFileSync(join(root, 'assets/logo.svg'), '<svg/>')
 
+  mkdirSync(join(root, 'scripts'))
+  writeFileSync(join(root, 'scripts/install-cli.sh'), '#!/bin/bash\n# stub')
+  // Dev-only file in scripts/ — verifies the include filter keeps it out of .codex/.
+  writeFileSync(join(root, 'scripts/devtool.js'), '// dev tooling, must not ship with the plugin')
+
+  mkdirSync(join(root, 'hooks'))
+  writeFileSync(join(root, 'hooks/hooks.json'), '{}')
+
   mkdirSync(join(root, '.codex'))
 }
 
@@ -42,6 +50,22 @@ describe('syncCodexArtifacts', () => {
       expect(lstatSync(join(dir, '.codex/skills')).isDirectory()).toBe(true)
       expect(lstatSync(join(dir, '.codex/skills')).isSymbolicLink()).toBe(false)
       expect(lstatSync(join(dir, '.codex/assets')).isSymbolicLink()).toBe(false)
+    })
+
+    it('honours the include filter — mirrors only listed files from scripts/', () => {
+      setupFixture(dir)
+      syncCodexArtifacts(dir)
+
+      expect(existsSync(join(dir, '.codex/scripts/install-cli.sh'))).toBe(true)
+      expect(existsSync(join(dir, '.codex/scripts/devtool.js'))).toBe(false)
+      expect(existsSync(join(dir, '.codex/hooks/hooks.json'))).toBe(true)
+    })
+
+    it('flags a missing file listed in include', () => {
+      setupFixture(dir)
+      rmSync(join(dir, 'scripts/install-cli.sh'))
+      const errors = syncCodexArtifacts(dir)
+      expect(errors).toContainEqual(expect.stringContaining('scripts/install-cli.sh listed in include but does not exist'))
     })
 
     it('replaces a pre-existing symlink with a real directory', () => {
