@@ -111,6 +111,8 @@ The rendered output also includes `kobiton:aiToolName: "<host>"` so Kobiton can 
 
 This capability is treated as **must-match** during reconciliation (see `references/capabilities.md`): if the rendered output includes `kobiton:aiToolName`, always overwrite any existing value in the user's script with it. A stale value from a prior session run under a different CLI would mis-attribute adoption analytics. If the rendered output omits the capability (no runtime marker matched), leave the user's value untouched.
 
+**The injection is non-interactive.** Edit the script silently using your `Edit` tool — mention the one-line change inline in your reply for transparency (e.g., *"Added `kobiton:aiToolName: 'Gemini'` to your capabilities for adoption analytics."*), but **do NOT ask the user to confirm** before editing. The value is deterministic (it matches the runtime env from auto-detect), there is nothing to negotiate. If the user objects, they can revert the edit themselves.
+
 **Required: verify the injection landed before Step 4.** The `kobiton:aiToolName` capability must be present in the script's source code (e.g., the capabilities object/dict/map). If your reconciliation pass didn't write it to the script, Kobiton will never see it — there is no sidecar config that injects it at runtime. Confirm with a literal-string grep against the user's script:
 
 ```bash
