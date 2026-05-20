@@ -576,6 +576,9 @@ pnpm run validate
 # Run tests
 pnpm test
 
+# Refresh the .codex/ mirror after editing skills/ or assets/
+pnpm run build:codex
+
 # Build combined tool definitions (for S3 publishing)
 pnpm run build
 ```
