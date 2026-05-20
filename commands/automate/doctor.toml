@@ -1,0 +1,115 @@
+description = "Read-only health checks for the Kobiton automate plugin"
+
+prompt = '''
+Run read-only health checks for the Kobiton automate plugin. Use your bash tool to run each check below. Print one ✓ (pass) or ✗ (failure) line per check. For each ✗, print an indented remediation hint on the next line prefixed with `→ `. **Never modify any files.** After all 4 checks, print `Summary: <passed>/4 checks passed.`
+
+## Check 1: CLI wrapper symlink installed
+
+```bash
+LINK="$HOME/.kobiton/bin/kobiton"
+if [ -L "$LINK" ]; then
+  TARGET="$(readlink "$LINK")"
+  if [ -f "$TARGET" ] && [ -x "$TARGET" ]; then
+    echo "PASS:$TARGET"
+  else
+    echo "FAIL:bad-target:$TARGET"
+  fi
+elif [ -e "$LINK" ]; then
+  echo "FAIL:not-a-symlink"
+else
+  echo "FAIL:missing"
+fi
+```
+
+- `PASS:<target>` → `✓ CLI installed (~/.kobiton/bin/kobiton → <target>)`
+- `FAIL:missing` → `✗ CLI installed (~/.kobiton/bin/kobiton not found)`, remediation: `→ Run /automate:setup to install the symlink.`
+- `FAIL:not-a-symlink` → `✗ CLI installed (~/.kobiton/bin/kobiton is not a symlink)`, same remediation
+- `FAIL:bad-target:<t>` → `✗ CLI installed (symlink target missing or not executable: <t>)`, same remediation
+
+## Check 2: Credentials file
+
+```bash
+F="$HOME/.kobiton/.credentials"
+if [ -f "$F" ] && [ ! -L "$F" ]; then
+  MODE=$(stat -f '%A' "$F" 2>/dev/null || stat -c '%a' "$F" 2>/dev/null)
+  if [ "$MODE" = "600" ]; then echo "PASS"; else echo "PASS:mode=$MODE"; fi
+elif [ -L "$F" ]; then echo "FAIL:symlink"
+elif [ -d "$F" ]; then echo "FAIL:directory"
+else echo "FAIL:missing"
+fi
+```
+
+- `PASS` → `✓ Credentials file`
+- `PASS:mode=<m>` → `✓ Credentials file (mode is <m>, expected 600)` (still counts as pass; informational)
+- `FAIL:missing` → `✗ Credentials file`, remediation: `→ ~/.kobiton/.credentials does not exist. Run /automate:setup to create it.`
+- `FAIL:symlink` → `✗ Credentials file (is a symlink)`, remediation: `→ Replace ~/.kobiton/.credentials with a regular file. Run /automate:setup.`
+- `FAIL:directory` → `✗ Credentials file (is a directory)`, remediation: `→ Remove the directory at ~/.kobiton/.credentials and run /automate:setup.`
+
+## Check 3: Active profile present
+
+```bash
+F="$HOME/.kobiton/.credentials"
+PROFILE="${KOBITON_PROFILE:-default}"
+if [ ! -f "$F" ]; then echo "SKIP"; exit 0; fi
+PROFILE="$PROFILE" awk '
+  BEGIN { found = 0 }
+  /^[[:space:]]*\[[[:space:]]*[^]]+[[:space:]]*\]/ {
+    n = $0; sub(/^[[:space:]]*\[[[:space:]]*/, "", n); sub(/[[:space:]]*\][[:space:]]*$/, "", n)
+    if (n == ENVIRON["PROFILE"]) { found = 1; exit 0 }
+  }
+  END { print (found ? "PASS" : "FAIL") }
+' "$F"
+```
+
+- `SKIP` → `- Active profile (skipped — credentials file missing)`, do not count as pass or fail.
+- `PASS` → `✓ Active profile [<PROFILE>]`
+- `FAIL` → `✗ Active profile [<PROFILE>]`, remediation: `→ Profile [<PROFILE>] not found in ~/.kobiton/.credentials. Run /automate:setup to create it, or unset KOBITON_PROFILE to use [default].`
+
+## Check 4: Required fields populated
+
+```bash
+F="$HOME/.kobiton/.credentials"
+PROFILE="${KOBITON_PROFILE:-default}"
+if [ ! -f "$F" ]; then echo "SKIP"; exit 0; fi
+PROFILE="$PROFILE" awk '
+  function trim(s) { sub(/^[[:space:]]+/, "", s); sub(/[[:space:]]+$/, "", s); return s }
+  BEGIN { found=0; in_p=0 }
+  /^[[:space:]]*\[[[:space:]]*[^]]+[[:space:]]*\]/ {
+    n = $0; sub(/^[[:space:]]*\[[[:space:]]*/, "", n); sub(/[[:space:]]*\][[:space:]]*$/, "", n)
+    if (n == ENVIRON["PROFILE"]) { in_p = 1; found = 1 } else { if (in_p) exit 0; in_p = 0 }
+    next
+  }
+  in_p && /=/ {
+    k = trim(substr($0, 1, index($0,"=")-1))
+    v = trim(substr($0, index($0,"=")+1))
+    if (v != "") seen[k] = 1
+  }
+  END {
+    if (!found) { print "MISSING_PROFILE"; exit 0 }
+    miss = ""
+    split("KOBITON_USER KOBITON_API_KEY KOBITON_PORTAL", reqs, " ")
+    for (i in reqs) if (!(reqs[i] in seen)) miss = miss " " reqs[i]
+    if (miss == "") print "PASS"; else print "FAIL:" miss
+  }
+' "$F"
+```
+
+- `SKIP` / `MISSING_PROFILE` → `- Required fields (skipped — earlier check failed)`, do not count.
+- `PASS` → `✓ Required fields (KOBITON_USER, KOBITON_API_KEY, KOBITON_PORTAL)`
+- `FAIL:<missing>` → `✗ Required fields (missing:<missing>)`, remediation: `→ Run /automate:setup to refresh, or edit ~/.kobiton/.credentials.`
+
+## Summary
+
+Count:
+- `passed` = number of `✓` lines across Checks 1–4
+- Skipped checks (printed with `-`) do not count as passed or failed
+
+Print exactly:
+
+```
+Summary: <passed>/4 checks passed.
+```
+
+If `passed < 4`, append: `Fix the issues above and rerun /automate:doctor.`
+If `passed == 4`, append: `All checks passed. You're ready to use the plugin.`
+'''
