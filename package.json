@@ -1,6 +1,6 @@
 {
   "name": "automate-local",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "type": "module",
   "private": true,
   "description": "Kobiton plugin manifests, tool schemas, and skills for AI coding assistants",

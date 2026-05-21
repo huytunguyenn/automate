@@ -18,9 +18,12 @@ Plugin for the [Kobiton](https://kobiton.com) mobile testing platform. Works wit
   - [API Key Authentication (Alternative)](#api-key-authentication-alternative)
 - [Getting Started](#getting-started)
 - [What You Can Do](#what-you-can-do)
-- [Tools](#tools-12)
+- [Tools](#tools)
 - [Skills](#skills)
+- [Commands](#commands)
 - [Running Automation Tests](#running-automation-tests)
+- [Interactive Device Testing](#interactive-device-testing)
+- [Examples](#examples)
 - [Troubleshooting](#troubleshooting)
 - [Privacy & Data](#privacy--data)
 - [Development](#development)
@@ -87,7 +90,7 @@ The `kobiton` MCP server and bundled skills are auto-discovered. Confirm the ext
 
 ### Codex CLI
 
-Add the Kobiton marketplace and install the plugin from the in-session browser. Codex opens a browser for Kobiton OAuth login on the first tool call — no API key setup required.
+Add the Kobiton marketplace and install the plugin from the in-session browser. Codex opens a browser for Kobiton OAuth login on the first tool call.
 
 ```bash
 codex plugin marketplace add kobiton/automate
@@ -122,7 +125,7 @@ Launch `codex` and run `/mcp` to confirm. The OAuth flow still applies on the fi
 
 ## Login
 
-The first time your AI assistant calls a Kobiton tool, a browser window opens for OAuth login. Sign in with your Kobiton credentials — tokens are then managed automatically by the assistant.
+The first time your AI assistant calls a Kobiton tool, a browser window opens for OAuth login. Sign in with your Kobiton credentials, tokens are then managed automatically by the assistant.
 
 You can also trigger or inspect authentication explicitly:
 
@@ -147,11 +150,11 @@ Behind the scenes, `.mcp.json` points to the Kobiton MCP server and authenticati
 }
 ```
 
-The `X-AI-Tool-Name` header tells Kobiton's MCP server that the request originates from Claude Code so usage can be attributed correctly in adoption analytics. It is not used for authentication or routing — only for telemetry.
-
 After login, verify the plugin loaded by asking your assistant: *"List my Kobiton devices"*. If tools aren't recognized, see [Troubleshooting](#troubleshooting).
 
-### API Key Authentication (Alternative)
+<a id="api-key-authentication-alternative"></a>
+<details>
+<summary><strong>API Key Authentication (Alternative)</strong></summary>
 
 For CI/CD pipelines or headless environments that cannot open a browser, use API key auth instead:
 
@@ -166,15 +169,19 @@ For CI/CD pipelines or headless environments that cannot open a browser, use API
 
 4. Reload your shell and restart your AI CLI.
 
-> **Note:** OAuth and API key auth cannot coexist in a single `.mcp.json`. The default OAuth config uses a `headers` block containing only `X-AI-Tool-Name`. The API key config adds `Authorization: ${KOBITON_AUTH}` to the same `headers` block. To switch, replace `.mcp.json` with the appropriate format.
+> **Note:** OAuth and API key auth cannot coexist in a single `.mcp.json` (the API key config sets an `Authorization` header that OAuth must not have). To switch, replace `.mcp.json` with the appropriate format from `.mcp.apikey-example.json`.
 >
 > **Gemini CLI:** API key auth requires editing `gemini-extension.json` instead of `.mcp.json`. Add a `headers` block under `mcpServers.kobiton` with `"Authorization": "${KOBITON_AUTH}"`.
 >
-> **Codex CLI:** OAuth is the default. For CI/headless environments where a browser cannot open, switch to API key auth by adding an `env_http_headers` block to the installed plugin's `.mcp.json` at `~/.codex/.tmp/marketplaces/kobiton/.codex/.mcp.json` (or maintain a fork), then export `KOBITON_AUTH` in the shell that launches `codex`:
+> **Codex CLI:** OAuth is the default. For CI/headless environments where a browser cannot open, switch to API key auth by adding an `env_http_headers` block to the plugin's `.mcp.json`, then export `KOBITON_AUTH` in the shell that launches `codex`:
 >
-> ```json
+> ```
 > "env_http_headers": { "Authorization": "KOBITON_AUTH" }
 > ```
+>
+> **Recommended:** maintain a fork of `kobiton/automate` with this change committed, then install from your fork - survives plugin reinstalls and Codex upgrades. **Last resort:** edit the installed copy under `~/.codex/.tmp/marketplaces/kobiton/.codex/.mcp.json` directly (this is Codex cache; the edit is overwritten on every reinstall).
+
+</details>
 
 ## Getting Started
 
@@ -184,7 +191,7 @@ After installation, run setup to fetch your credentials and write them to `~/.ko
 /automate:setup
 ```
 
-The plugin uses your already-authenticated MCP session (OAuth) to fetch your username and API key — no manual file editing required.
+The plugin uses your already-authenticated MCP session (OAuth) to fetch your username and API key - no manual file editing required.
 
 To verify everything is wired correctly, run the diagnostic:
 
@@ -196,27 +203,29 @@ To verify everything is wired correctly, run the diagnostic:
 
 **CLI symlink install behavior across CLIs:** The `run-interactive-test` skill depends on a `~/.kobiton/bin/kobiton` symlink.
 
-- **Claude Code, Codex CLI** — the symlink is recreated automatically by a bundled SessionStart hook on every session start. On Codex, the first session prompts you to trust the hook once via `/hooks`; subsequent sessions run it silently. Running `/automate:setup` (Claude) also recreates the symlink on demand.
-- **GitHub Copilot CLI, Gemini CLI** — both CLIs load `/automate:setup` (Copilot reads Claude-format Markdown commands; Gemini reads bundled TOML commands at `commands/automate/setup.toml`). Run `/automate:setup` once after install to create the symlink. Neither CLI has a SessionStart hook, so the symlink isn't recreated automatically — re-run setup if it goes missing.
+- **Claude Code, Codex CLI**: is recreated automatically by a bundled SessionStart hook on every session start. On Codex, the first session prompts you to trust the hook once via `/hooks`; subsequent sessions run it silently. Running `/automate:setup` (Claude) also recreates the symlink on demand.
+- **GitHub Copilot CLI, Gemini CLI**: both CLIs load `/automate:setup` (Copilot reads Claude-format Markdown commands; Gemini reads bundled TOML commands at `commands/automate/setup.toml`). Run `/automate:setup` once after install to create the symlink. Neither CLI has a SessionStart hook, so the symlink isn't recreated automatically - re-run setup if it goes missing.
 
-Manual fallback — if the SessionStart hook was denied on Codex, or you need to install without an active session:
+Manual fallback - if the SessionStart hook was denied on Codex, or you need to install without an active session:
 
 ```bash
 bash "$(find ~/.codex -name install-cli.sh -path '*automate*' 2>/dev/null | head -1)"
 ```
 
-The script is idempotent — safe to re-run.
+The script is idempotent - safe to re-run.
 
 ## What You Can Do
 
-**Ask Claude naturally:**
+**Ask your assistant naturally:**
 
 - "List my available Android devices"
 - "Upload my-app.apk and run tests on the Pixel 6"
 - "Show me the results for session 502"
 - "Run my Appium test script on the Pixel 6"
 
-## Tools (12)
+## Tools
+
+13 MCP tools across 4 domains.
 
 ### Devices
 
@@ -245,6 +254,12 @@ The script is idempotent — safe to re-run.
 | `confirmAppUpload` | Confirm uploaded app for tracking record |
 | `getApp` | Get app details and version history |
 
+### Account
+
+| Tool | Description |
+|------|-------------|
+| `getCredential` | Return the authenticated user's username, API key, and portal URL — backs `/automate:setup` |
+
 ## Skills
 
 | Skill | Description |
@@ -264,17 +279,17 @@ The script is idempotent — safe to re-run.
 
 ## Running Automation Tests
 
-Use the **run-automation-suite** skill to run local Appium test scripts. Claude reads your script, extracts capabilities, confirms the target device, and executes the script locally. Supports Node.js (`.js`), Python (`.py`), .NET (`.cs`), and Java (`.java`) scripts.
+Use the **run-automation-suite** skill to run local Appium test scripts. Your AI assistant reads your script, extracts capabilities, confirms the target device, and executes the script locally. Supports Node.js (`.js`), Python (`.py`), .NET (`.cs`), and Java (`.java`) scripts.
 
 ## Interactive Device Testing
 
-Use the **run-interactive-test** skill to interact with devices using natural language. Describe what you want — "tap the login button", "type hello in the search field", "swipe down" — and Claude translates your intent into CLI commands.
+Use the **run-interactive-test** skill to interact with devices using natural language. Describe what you want — "tap the login button", "type hello in the search field", "swipe down" — and your assistant translates your intent into CLI commands.
 
 Beyond WebDriver, the skill also supports device operations (adb shell, logs, screen capture), file management (push/pull files to device), and app management.
 
 ## Examples
 
-See [docs/EXAMPLES.md](docs/EXAMPLES.md) for prompt examples covering every tool and skill — device management, session management, app management, automation, and interactive testing.
+See [docs/examples.md](docs/examples.md) for prompt examples covering every tool and skill - device management, session management, app management, automation, and interactive testing.
 
 ## Troubleshooting
 
@@ -286,11 +301,14 @@ After the plugin is updated upstream, pull the latest version:
 - **Gemini CLI:** run `gemini extensions update kobiton-automate` from your shell
 - **Codex CLI:** run `codex plugin marketplace upgrade` to refresh the marketplace catalog, then reinstall the plugin from the browser to pull the latest manifest
 
-To make sure the assistant picks up the changes with no stale cache:
+To make sure the assistant picks up the changes with no stale cache, reload per CLI:
 
-1. Run `/reload-plugins` (Claude Code) to reload all plugins in the current session
-2. If tools still behave unexpectedly, run `/clear` to reset the session context
-3. As a last resort, quit your CLI session and start a new one
+- **Claude Code:** run `/reload-plugins` in-session. If tools still behave unexpectedly, `/clear` resets the session context.
+- **GitHub Copilot CLI:** exit and relaunch the session (`exit`, then `copilot`). No in-session reload command.
+- **Gemini CLI:** exit and relaunch (`exit`, then `gemini`). Confirm with `gemini extensions list`.
+- **Codex CLI:** exit and relaunch. Confirm with `codex plugin list`.
+
+If the issue persists after relaunch, quit the terminal entirely and start a fresh session.
 
 ### Common Issues
 
@@ -333,6 +351,20 @@ If using the manual fallback config, also check `grep -A 4 "mcp_servers.kobiton"
 
 Then check the server list (`/mcp` in Claude Code, Gemini CLI, and Codex CLI, `/mcp show` in Copilot CLI). `kobiton` should now appear.
 </details>
+
+<details>
+<summary><strong>"Device not found"</strong></summary>
+
+The device may be offline, reserved by another user, or no longer in your device list. Use `listDevices` with `available: true` to find currently online devices.
+</details>
+
+<details>
+<summary><strong>"Upload timeout"</strong></summary>
+
+Large app files or slow connections can cause uploads to time out. Retry the upload — pre-signed URLs expire after 30 minutes, so a new URL will be generated automatically.
+</details>
+
+### Claude Code
 
 <details>
 <summary><strong>Plugin features not working or behaving unexpectedly</strong></summary>
@@ -396,18 +428,6 @@ The plugin installed but tools don't appear or Claude doesn't recognize Kobiton 
 2. Try asking: *"List my Kobiton devices"*
 3. If still not working, quit Claude Code entirely and start a fresh session
 4. Verify `.mcp.json` exists in the plugin directory — it tells Claude where the Kobiton MCP server lives
-</details>
-
-<details>
-<summary><strong>"Device not found"</strong></summary>
-
-The device may be offline, reserved by another user, or no longer in your device list. Use `listDevices` with `available: true` to find currently online devices.
-</details>
-
-<details>
-<summary><strong>"Upload timeout"</strong></summary>
-
-Large app files or slow connections can cause uploads to time out. Retry the upload — pre-signed URLs expire after 30 minutes, so a new URL will be generated automatically.
 </details>
 
 ### Copilot CLI
@@ -527,7 +547,7 @@ Codex tries to launch your system browser when Kobiton requires sign-in. If noth
 
 1. **Default browser is set** — your OS needs a default browser. SSH sessions without X forwarding cannot open one.
 2. **Localhost ports not blocked** — Codex listens on a local port to receive the login callback. Firewall rules that block all localhost ports will break the flow.
-3. **Headless environment** — switch to API key auth (see the **API Key Authentication** section above) and add `env_http_headers` to the installed plugin's `.mcp.json`.
+3. **Headless environment** — switch to API key auth (see the **API Key Authentication** section above). Easiest: fork this repo, commit the `env_http_headers` change to `.codex/.mcp.json`, install from your fork.
 </details>
 
 <details>
