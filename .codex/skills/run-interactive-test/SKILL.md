@@ -259,6 +259,17 @@ This terminates the Kobiton-side session and frees the device. The local artifac
 | List directory | `$KOBITON_BIN device adb-shell ls -la <path>` |
 | Current IME | `$KOBITON_BIN device adb-shell "dumpsys input_method \| grep mCurId"` |
 
+**Big-output commands.** `dumpsys`, `logcat`, `pm list -f`, and full process dumps can blow past the 25k-token MCP limit. For these, redirect to an artifact file first, then read/grep only what you need:
+
+    $KOBITON_BIN device adb-shell "logcat -d -t 1000" \
+      > .kobiton/sessions/<session-id>/logcat-$(date +%s).txt
+    grep -E 'FATAL|AndroidRuntime' \
+      .kobiton/sessions/<session-id>/logcat-*.txt | head -20
+
+Never paste full dumpsys/logcat output to chat - surface a summary + the file path.
+
+**Long-running commands.** Streaming commands like `logcat` (no `-d`), `tcpdump`, or `top` (no `-n 1`) run forever. Either bound them (`-d -t N`, `-c N`, `-n 1`) or launch with `run_in_background: true` and kill explicitly.
+
 **adb-shell vs WebDriver overlap.** Both can press keys, type, and tap. Tie-breakers:
 
 - If the target is a known element ID -> WebDriver (`wd post element/<id>/click`, `.../value`).
