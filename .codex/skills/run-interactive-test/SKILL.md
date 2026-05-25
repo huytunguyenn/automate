@@ -232,13 +232,13 @@ This terminates the Kobiton-side session and frees the device. The local artifac
 
   Wrong: `$KOBITON_BIN device adb-shell dumpsys window | grep mCurrentFocus` - the `| grep` runs locally on the full dumpsys output (slow, can overflow the 25k-token MCP limit, may truncate before the line you want). Quote the whole expression.
 
-**Platform guard.** `adb` is Android-only. If the active session targets iOS, do **not** call `device adb-shell` — refuse and reach for the WebDriver equivalent (`wd post execute '{"script":"mobile: ..."}'`) or a different inspection path.
+**Platform guard.** `adb` is Android-only. If the active session targets iOS, do **not** call `device adb-shell`. Refuse and reach for the WebDriver equivalent (`wd post execute '{"script":"mobile: ..."}'`) or a different inspection path.
 
 | Intent | Command |
 |--------|---------|
 | Get OS / build property | `$KOBITON_BIN device adb-shell getprop <key>` |
 | Get screen resolution | `$KOBITON_BIN device adb-shell wm size` |
-| Get foreground app/activity | `$KOBITON_BIN device adb-shell "dumpsys window | grep mCurrentFocus"` |
+| Get foreground app/activity | `$KOBITON_BIN device adb-shell "dumpsys window \| grep mCurrentFocus"` |
 | List running processes | `$KOBITON_BIN device adb-shell ps -A` |
 | List user-installed packages | `$KOBITON_BIN device adb-shell pm list packages -3` |
 | Find APK path of a package | `$KOBITON_BIN device adb-shell pm path <pkg>` |
@@ -257,7 +257,7 @@ This terminates the Kobiton-side session and frees the device. The local artifac
 | Write system setting | `$KOBITON_BIN device adb-shell settings put system <key> <value>` |
 | Read file content | `$KOBITON_BIN device adb-shell cat <path>` |
 | List directory | `$KOBITON_BIN device adb-shell ls -la <path>` |
-| Current IME | `$KOBITON_BIN device adb-shell "dumpsys input_method | grep mCurId"` |
+| Current IME | `$KOBITON_BIN device adb-shell "dumpsys input_method \| grep mCurId"` |
 
 **adb-shell vs WebDriver overlap.** Both can press keys, type, and tap. Tie-breakers:
 
