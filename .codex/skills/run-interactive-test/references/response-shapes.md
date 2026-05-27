@@ -27,7 +27,7 @@ Most WebDriver endpoints return a JSON envelope `{"value": <result>}`. A few com
 
 | Command | Response on stdout | How to read |
 |---|---|---|
-| `device adb-shell <cmd>` | Raw stdout from the adb command | Same as running `adb shell <cmd>` locally |
+| `device adb-shell <cmd>` | Raw stdout from the on-device shell. Shape depends on `<cmd>` - KV pairs (`dumpsys battery`), single line (`getprop`), multi-line table (`pm list`, `ps`), or free text (`logcat`) | (a) For single-value extractions, `grep` or `awk` the line. (b) For multi-line output, save to artifact then parse. (c) **Gotcha:** exit code 0 does NOT mean the inner command succeeded - adb returns 0 as long as it could deliver the command; check stderr or look for error strings in stdout. |
 | `device screen` | JPEG image bytes - check `--help` for output flag (e.g., `--out`) | Redirect or use the documented output flag |
 | `device forward`, `device ps`, `file list` | Plain text on stdout | Read directly |
 | `file push`, `file pull` | Text confirmation; non-zero exit on failure | Surface failures by exit code |
@@ -37,5 +37,5 @@ Most WebDriver endpoints return a JSON envelope `{"value": <result>}`. A few com
 ## See also
 
 - [`../SKILL.md`](../SKILL.md) - the orchestration skill that consumes this reference.
-- [`../SKILL.md#command-reference`](../SKILL.md#command-reference) - the inverse lookup (intent → command shape) that complements this file (command → response shape).
+- [`../SKILL.md#command-reference`](../SKILL.md#command-reference) - the inverse lookup (intent -> command shape) that complements this file (command -> response shape).
 - [Appium 2.x documentation](https://appium.io/docs/en/2.0/) - canonical W3C WebDriver / Appium endpoint response schemas the CLI thinly wraps.

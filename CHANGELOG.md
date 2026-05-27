@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.2 - 2026-05-25
+
+- Updated bundled `kobiton` CLI binary in `run-interactive-test` skill to the latest version
+- Expanded `run-interactive-test` adb-shell documentation for AI agents: quoting rules (local vs device shell parsing), platform guard (Android only), 22-row intent-to-command cookbook, big-output redirect pattern (to avoid 25k-token MCP overflow), long-running command guidance, and response parsing gotchas in `references/response-shapes.md` — notably that `adb` returns exit code 0 even when the inner command fails
+
+
 ## 1.2.1 - 2026-05-20
 
 - `run-automation-suite` skill now defaults to the **device-only view URL** (`?view=device-only`) when surfacing the live session link, hiding the surrounding Kobiton UI for a cleaner watch-the-test experience. Falls back to the default-view URL only when the user explicitly asks to interact with the device.
