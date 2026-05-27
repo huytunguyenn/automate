@@ -7,8 +7,9 @@
   "scripts": {
     "build:codex": "node scripts/sync-codex-artifacts.js",
     "build:tools": "node scripts/build-tool-definitions.js",
-    "build": "pnpm run build:tools && pnpm run build:codex",
-    "validate": "node scripts/validate.js && node scripts/sync-codex-artifacts.js --check",
+    "build:version": "node scripts/sync-version.js",
+    "build": "pnpm run build:tools && pnpm run build:codex && pnpm run build:version",
+    "validate": "node scripts/validate.js && node scripts/sync-codex-artifacts.js --check && node scripts/sync-version.js --check",
     "test": "vitest run",
     "test:watch": "vitest"
   },
