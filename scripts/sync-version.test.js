@@ -23,6 +23,9 @@ function setupFixture(root, version = '1.2.0') {
   mkdirSync(join(root, '.codex/.codex-plugin'), {recursive: true})
   writeJson(join(root, '.codex/.codex-plugin/plugin.json'), {name: 'automate', version})
 
+  mkdirSync(join(root, '.cursor-plugin'), {recursive: true})
+  writeJson(join(root, '.cursor-plugin/plugin.json'), {name: 'automate', version})
+
   writeJson(join(root, 'gemini-extension.json'), {name: 'kobiton-automate', version})
 
   writeFileSync(join(root, 'CHANGELOG.md'), `# Changelog\n\n## ${version} - 2026-01-01\n\n- initial\n`)
@@ -42,7 +45,7 @@ describe('syncVersion', () => {
   })
 
   describe('write mode', () => {
-    it('propagates package.json version into all four manifests', () => {
+    it('propagates package.json version into all host manifests', () => {
       setupFixture(dir, '1.2.0')
       writeJson(join(dir, 'package.json'), {name: 'automate', version: '1.3.0', type: 'module'})
 
@@ -51,6 +54,7 @@ describe('syncVersion', () => {
 
       expect(readJson(dir, '.claude-plugin/plugin.json').version).toBe('1.3.0')
       expect(readJson(dir, '.codex/.codex-plugin/plugin.json').version).toBe('1.3.0')
+      expect(readJson(dir, '.cursor-plugin/plugin.json').version).toBe('1.3.0')
       expect(readJson(dir, 'gemini-extension.json').version).toBe('1.3.0')
       expect(readJson(dir, '.claude-plugin/marketplace.json').plugins[0].version).toBe('1.3.0')
     })

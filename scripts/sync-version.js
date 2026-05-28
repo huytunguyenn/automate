@@ -4,6 +4,7 @@
 // Source of truth: package.json `version`. Derived:
 //  - .claude-plugin/plugin.json        version
 //  - .codex/.codex-plugin/plugin.json  version
+//  - .cursor-plugin/plugin.json        version
 //  - gemini-extension.json             version
 //  - .claude-plugin/marketplace.json   plugins[name=automate].version  (NOT metadata.version, which is the marketplace catalog version)
 // CHANGELOG.md is handwritten and never rewritten here; this script only checks that its top `## X.Y.Z` entry matches the source version.
@@ -21,6 +22,7 @@ const SOURCE = 'package.json'
 const SIMPLE_TARGETS = [
   '.claude-plugin/plugin.json',
   '.codex/.codex-plugin/plugin.json',
+  '.cursor-plugin/plugin.json',
   'gemini-extension.json'
 ]
 
