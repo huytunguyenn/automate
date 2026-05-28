@@ -4,6 +4,7 @@
   "type": "module",
   "private": true,
   "description": "Kobiton plugin manifests, tool schemas, and skills for AI coding assistants",
+  "license": "MIT",
   "scripts": {
     "build:codex": "node scripts/sync-codex-artifacts.js",
     "build:tools": "node scripts/build-tool-definitions.js",
