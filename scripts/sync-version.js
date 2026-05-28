@@ -7,6 +7,7 @@
 //  - .cursor-plugin/plugin.json        version
 //  - gemini-extension.json             version
 //  - .claude-plugin/marketplace.json   plugins[name=automate].version  (NOT metadata.version, which is the marketplace catalog version)
+//  - .cursor-plugin/marketplace.json   plugins[name=automate].version  (NOT metadata.version, same convention as Claude marketplace)
 // CHANGELOG.md is handwritten and never rewritten here; this script only checks that its top `## X.Y.Z` entry matches the source version.
 //
 // Run in:
@@ -26,10 +27,12 @@ const SIMPLE_TARGETS = [
   'gemini-extension.json'
 ]
 
-// marketplace.json carries the plugin version under plugins[name=automate].version.
+// Marketplace manifests carry the plugin version under plugins[name=automate].version.
 // Note: metadata.version must not be touched (it is the marketplace catalog version, not plugin version).
-const MARKETPLACE = '.claude-plugin/marketplace.json'
-const MARKETPLACE_PLUGIN = 'automate'
+const MARKETPLACES = [
+  {path: '.claude-plugin/marketplace.json', pluginName: 'automate'},
+  {path: '.cursor-plugin/marketplace.json', pluginName: 'automate'}
+]
 
 const CHANGELOG = 'CHANGELOG.md'
 const FIX_HINT = 'Run `pnpm run build:version` to fix this'
@@ -62,18 +65,23 @@ export function syncVersion(rootDir, {check = false} = {}) {
     }
   }
 
-  const market = readJson(MARKETPLACE)
-  const entry = Array.isArray(market.plugins) && market.plugins.find((p) => p.name === MARKETPLACE_PLUGIN)
-  if (!entry) {
-    errors.push(`${MARKETPLACE} has no plugins[] entry named "${MARKETPLACE_PLUGIN}"`)
-  }
-  else if (entry.version !== version) {
+  for (const {path, pluginName} of MARKETPLACES) {
+    const market = readJson(path)
+    const entry = Array.isArray(market.plugins) && market.plugins.find((p) => p.name === pluginName)
+    if (!entry) {
+      errors.push(`${path} has no plugins[] entry named "${pluginName}"`)
+      continue
+    }
+    if (entry.version === version) {
+      continue
+    }
+
     if (check) {
-      errors.push(`${MARKETPLACE} plugins["${MARKETPLACE_PLUGIN}"].version is ${JSON.stringify(entry.version)}, expected ${version}. ${FIX_HINT}.`)
+      errors.push(`${path} plugins["${pluginName}"].version is ${JSON.stringify(entry.version)}, expected ${version}. ${FIX_HINT}.`)
     }
     else {
       entry.version = version
-      writeJson(MARKETPLACE, market)
+      writeJson(path, market)
     }
   }
 
