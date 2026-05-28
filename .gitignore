@@ -17,6 +17,7 @@ Desktop.ini
 .cursor/*
 !.cursor/mcp.json
 !.cursor/mcp.apikey-example.json
+!.cursor/hooks
 .history
 
 # Vim/Emacs
