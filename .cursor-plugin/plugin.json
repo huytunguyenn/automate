@@ -1,6 +1,6 @@
 {
   "name": "automate-local",
-  "displayName": "Kobiton Automate",
+  "displayName": "automate",
   "version": "1.3.0",
   "description": "Connect to Kobiton mobile testing platform - manage devices, run automation suites, and view test results",
   "author": {
@@ -28,6 +28,7 @@
     "devices",
     "kobiton"
   ],
+  "commands": "./commands/",
   "skills": "./skills/",
   "hooks": "./.cursor/hooks/hooks.json",
   "mcpServers": "./.cursor/mcp.json"
