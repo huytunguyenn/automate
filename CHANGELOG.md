@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Documented cross-client install paths for Cursor, ChatGPT (Apps SDK), and Continue / Cline / other generic MCP clients in README — adds an "Other MCP Clients" subsection under Installation. Ships a default `.cursor/mcp.json` at the repo root so Cursor users get a working config without hand-crafting one. Honest framing: configs derived from each client's published documentation; end-to-end-tested only on the four already-documented clients
+
+
 ## 1.2.2 - 2026-05-25
 
 - Added 14 Test Case Management MCP tool schemas in `tools/test-management.yaml` — test cases (`saveTestCase`, `listTestCases`, `getTestCase`, `updateTestCase`, `deleteTestCase`), test runs (`createTestRun`, `listTestRuns`, `getTestRun`, `terminateTestRun`), and test suites (`listTestSuites`, `getTestSuite`, `createTestSuite`, `updateTestSuite`, `deleteTestSuite`)
