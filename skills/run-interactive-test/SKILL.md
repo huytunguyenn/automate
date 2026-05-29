@@ -40,7 +40,7 @@ Use this skill whenever the user wants to interact with a mobile device on Kobit
 
 Before invoking this skill, ensure:
 
-- **Bundled Kobiton CLI** - `~/.kobiton/bin/kobiton` (a symlink to this plugin's `run.sh` wrapper) must exist and point at an executable. Claude Code and Codex CLI both recreate it automatically via a bundled SessionStart hook; on Codex, the user trusts the hook once via `/hooks` after install. `/automate:setup` re-installs the symlink on demand on any host. GitHub Copilot CLI and Gemini CLI load `/automate:setup` (Copilot via Claude-format `.md`, Gemini via bundled TOML at `commands/automate/setup.toml`) but have no SessionStart hook — run `/automate:setup` once after install. The bundled binary targets **macOS** - on other platforms, do not invoke this skill; recommend `run-automation-suite` or the MCP tools instead, which are platform-independent.
+- **Bundled Kobiton CLI** - `~/.kobiton/bin/kobiton` (a symlink to this plugin's `run.sh` wrapper) must exist and point at an executable. Claude Code and Codex CLI both recreate it automatically via a bundled SessionStart hook; on Codex, the user trusts the hook once via `/hooks` after install. `/automate:setup` re-installs the symlink on demand on any host. GitHub Copilot CLI and Gemini CLI load `/automate:setup` (Copilot via Claude-format `.md`, Gemini via bundled TOML at `commands/automate/setup.toml`) but have no SessionStart hook - run `/automate:setup` once after install. The bundled binary targets **macOS** - on other platforms, do not invoke this skill; recommend `run-automation-suite` or the MCP tools instead, which are platform-independent.
 - **Credentials file** - `~/.kobiton/.credentials` must contain a valid INI-formatted profile with `KOBITON_USER`, `KOBITON_API_KEY`, and `KOBITON_PORTAL`. Created by `/automate:setup`. The active profile is `$KOBITON_PROFILE` if set, otherwise `default`.
 - **Kobiton MCP connection** - useful for `listDevices` / `getDeviceStatus` calls when picking a device. Default `api.kobiton.com/mcp`; check `.mcp.json` for the configured endpoint.
 - **Kobiton account** - credentials with device access for the target platform (Android / iOS) and remaining session quota.
@@ -131,7 +131,7 @@ If a session may already exist (e.g., the user is continuing earlier work), chec
 
     $KOBITON_BIN session ping
 
-Exit code 0 → session alive, reuse it. Non-zero → expired; create a fresh one.
+Exit code 0 -> session alive, reuse it. Non-zero -> expired; create a fresh one.
 
 ### 3. Interact with the device
 
@@ -213,13 +213,77 @@ This terminates the Kobiton-side session and frees the device. The local artifac
 | Press home (Android) | `$KOBITON_BIN wd post execute '{"script":"mobile: pressKey","args":{"keycode":3}}'` |
 | Ping session | `$KOBITON_BIN session ping` |
 
+### adb-shell commands (Android only)
+
+`device adb-shell` forwards everything after it to `adb shell <...>` on the device. Two failure modes account for most AI-agent mistakes - read these before composing a command.
+
+**Quoting rules.** The local shell parses pipes, redirects, globs, and variable expansion *before* the wrapper sees them. Anything you wrap in quotes survives to the device's shell; anything outside is interpreted on your laptop.
+
+- **Plain command, no shell metacharacters** - pass args separately:
+
+      $KOBITON_BIN device adb-shell ls -la /sdcard/Download/
+      $KOBITON_BIN device adb-shell getprop ro.build.version.release
+
+- **Pipes, redirects, globs, `&&`, `$VAR`, or quotes inside the command** - wrap the entire remote command in one quoted string so it runs on the device's shell, not your local shell:
+
+      $KOBITON_BIN device adb-shell "dumpsys window | grep mCurrentFocus"
+      $KOBITON_BIN device adb-shell 'pm list packages -3 | wc -l'
+      $KOBITON_BIN device adb-shell "logcat -d -t 200 > /sdcard/log.txt"
+
+  Wrong: `$KOBITON_BIN device adb-shell dumpsys window | grep mCurrentFocus` - the `| grep` runs locally on the full dumpsys output (slow, can overflow the 25k-token MCP limit, may truncate before the line you want). Quote the whole expression.
+
+**Platform guard.** `adb` is Android-only. If the active session targets iOS, do **not** call `device adb-shell`. Refuse and reach for the WebDriver equivalent (`wd post execute '{"script":"mobile: ..."}'`) or a different inspection path.
+
+| Intent | Command |
+|--------|---------|
+| Get OS / build property | `$KOBITON_BIN device adb-shell getprop <key>` |
+| Get screen resolution | `$KOBITON_BIN device adb-shell wm size` |
+| Get foreground app/activity | `$KOBITON_BIN device adb-shell "dumpsys window \| grep mCurrentFocus"` |
+| List running processes | `$KOBITON_BIN device adb-shell ps -A` |
+| List user-installed packages | `$KOBITON_BIN device adb-shell pm list packages -3` |
+| Find APK path of a package | `$KOBITON_BIN device adb-shell pm path <pkg>` |
+| Launch app by package | `$KOBITON_BIN device adb-shell monkey -p <pkg> -c android.intent.category.LAUNCHER 1` |
+| Force-stop app | `$KOBITON_BIN device adb-shell am force-stop <pkg>` |
+| Clear app data | `$KOBITON_BIN device adb-shell pm clear <pkg>` |
+| Battery level + charging state | `$KOBITON_BIN device adb-shell dumpsys battery` |
+| Memory snapshot for a package | `$KOBITON_BIN device adb-shell dumpsys meminfo <pkg>` |
+| Storage free on /sdcard | `$KOBITON_BIN device adb-shell df -h /sdcard` |
+| Press hardware key (home=3, back=4, power=26) | `$KOBITON_BIN device adb-shell input keyevent <code>` |
+| Type text into focused field | `$KOBITON_BIN device adb-shell input text "<text>"` |
+| Tap at coordinates | `$KOBITON_BIN device adb-shell input tap <x> <y>` |
+| Swipe (ms = duration) | `$KOBITON_BIN device adb-shell input swipe <x1> <y1> <x2> <y2> <ms>` |
+| Read recent logs (bounded) | `$KOBITON_BIN device adb-shell "logcat -d -t 500"` |
+| Read system setting | `$KOBITON_BIN device adb-shell settings get system <key>` |
+| Write system setting | `$KOBITON_BIN device adb-shell settings put system <key> <value>` |
+| Read file content | `$KOBITON_BIN device adb-shell cat <path>` |
+| List directory | `$KOBITON_BIN device adb-shell ls -la <path>` |
+| Current IME | `$KOBITON_BIN device adb-shell "dumpsys input_method \| grep mCurId"` |
+
+**Big-output commands.** `dumpsys`, `logcat`, `pm list -f`, and full process dumps can blow past the 25k-token MCP limit. For these, redirect to an artifact file first, then read/grep only what you need:
+
+    $KOBITON_BIN device adb-shell "logcat -d -t 1000" \
+      > .kobiton/sessions/<session-id>/logcat-$(date +%s).txt
+    grep -E 'FATAL|AndroidRuntime' \
+      .kobiton/sessions/<session-id>/logcat-*.txt | head -20
+
+Never paste full dumpsys/logcat output to chat - surface a summary + the file path.
+
+**Long-running commands.** Streaming commands like `logcat` (no `-d`), `tcpdump`, or `top` (no `-n 1`) run forever. Either bound them (`-d -t N`, `-c N`, `-n 1`) or launch with `run_in_background: true` and kill explicitly.
+
+**adb-shell vs WebDriver overlap.** Both can press keys, type, and tap. Tie-breakers:
+
+- If the target is a known element ID -> WebDriver (`wd post element/<id>/click`, `.../value`).
+- If the target is a hardware key, a blind coordinate tap, or a system-level action -> `adb shell input` / `am` / `pm`.
+- For inspection (foreground app, processes, build props, settings) -> adb shell only; there is no WebDriver equivalent.
+
+Default: prefer adb-shell for system-level work, WebDriver for UI element-level work.
+
 ### Beyond WebDriver
 
 These commands require an active session. Run `$KOBITON_BIN <command> --help` to discover the exact flags before using them - argument order and required flags vary.
 
 | Domain | Command | What it does |
 |--------|---------|-------------|
-| Device | `$KOBITON_BIN device adb-shell <command>` | Run adb shell command on device |
 | Device | `$KOBITON_BIN device screen` | Capture device screen as jpg |
 | Device | `$KOBITON_BIN device forward <local> <remote>` | Forward local port to device |
 | Device | `$KOBITON_BIN device ps` | List processes on device |
@@ -271,7 +335,7 @@ Where `<portal-base>` is derived from the `KOBITON_PORTAL` value in the active p
 
 ## Examples
 
-### Example 1: Open Settings → Display → screenshot (Android)
+### Example 1: Open Settings -> Display -> screenshot (Android)
 
 > "Take an Android Pixel device, open the Settings app, tap Display, then screenshot what's on screen."
 
@@ -329,7 +393,7 @@ The skill walks through:
 
        ~/.kobiton/bin/kobiton session ping
 
-   Exit 0 → reuse it. Non-zero → create a new one as in Example 1.
+   Exit 0 -> reuse it. Non-zero -> create a new one as in Example 1.
 
 2. Push the file:
 
