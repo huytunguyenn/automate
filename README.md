@@ -113,7 +113,7 @@ If you prefer not to use the marketplace, register the MCP server directly in `~
 
 ```toml
 [mcp_servers.kobiton]
-url = "https://api-test-white.kobiton.com/mcp"
+url = "https://api-test-green.kobiton.com/mcp"
 ```
 
 Then copy `AGENTS.md` into your workspace so Codex picks up the tool list and skill reference:
@@ -159,7 +159,7 @@ You won't get the bundled skills or auto CLI-wrapper install — run `/automate:
 
 ### Other MCP Clients
 
-Kobiton's MCP server is built on the open [Model Context Protocol](https://modelcontextprotocol.io), so **any MCP-compatible client can connect to it**. Same endpoint (`https://api-test-white.kobiton.com/mcp`), same browser-based OAuth login as the clients above.
+Kobiton's MCP server is built on the open [Model Context Protocol](https://modelcontextprotocol.io), so **any MCP-compatible client can connect to it**. Same endpoint (`https://api-test-green.kobiton.com/mcp`), same browser-based OAuth login as the clients above.
 
 > **Good to know:** End-to-end tested only on Claude Code, Copilot CLI, Gemini CLI, Codex CLI, and Cursor CLI; entries below are configs we expect to work but have not yet validated. Please [open an issue](https://github.com/kobiton/automate/issues/new?template=bug_report.md) if any do not work for your setup. We're happy to help.
 
@@ -168,7 +168,7 @@ Kobiton's MCP server is built on the open [Model Context Protocol](https://model
 ChatGPT consumes MCP servers via an HTTPS endpoint registered in ChatGPT developer mode. Point ChatGPT at:
 
 ```
-https://api-test-white.kobiton.com/mcp
+https://api-test-green.kobiton.com/mcp
 ```
 
 The Apps SDK does not require a separate manifest file; tool descriptors, OAuth flow, and `_meta.ui` widget hints flow through the MCP protocol itself. Reference: [developers.openai.com/apps-sdk/build/mcp-server](https://developers.openai.com/apps-sdk/build/mcp-server).
@@ -181,7 +181,7 @@ The Cursor IDE (the desktop editor, not the `agent` CLI covered above) reads MCP
 {
   "mcpServers": {
     "kobiton": {
-      "url": "https://api-test-white.kobiton.com/mcp"
+      "url": "https://api-test-green.kobiton.com/mcp"
     }
   }
 }
@@ -208,7 +208,7 @@ Behind the scenes, `.mcp.json` points to the Kobiton MCP server and authenticati
   "mcpServers": {
     "kobiton": {
       "type": "http",
-      "url": "https://api-test-white.kobiton.com/mcp",
+      "url": "https://api-test-green.kobiton.com/mcp",
       "headers": {
         "X-AI-Tool-Name": "Claude"
       }
@@ -517,7 +517,7 @@ If the `kobiton` MCP server doesn't appear, add it manually by running `/mcp add
 
 - **Server name:** `kobiton`
 - **Type:** `http`
-- **URL:** `https://api-test-white.kobiton.com/mcp`
+- **URL:** `https://api-test-green.kobiton.com/mcp`
 
 Alternatively, edit `~/.copilot/mcp-config.json` directly:
 
@@ -526,7 +526,7 @@ Alternatively, edit `~/.copilot/mcp-config.json` directly:
   "mcpServers": {
     "kobiton": {
       "type": "http",
-      "url": "https://api-test-white.kobiton.com/mcp"
+      "url": "https://api-test-green.kobiton.com/mcp"
     }
   }
 }
@@ -636,7 +636,7 @@ For additional help, open an issue at [github.com/kobiton/automate/issues](https
 
 ## Privacy & Data
 
-This plugin connects to the Kobiton cloud API (`api-test-white.kobiton.com`) over HTTPS (TLS 1.2+).
+This plugin connects to the Kobiton cloud API (`api-test-green.kobiton.com`) over HTTPS (TLS 1.2+).
 
 **Authentication:**
 
