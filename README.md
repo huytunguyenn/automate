@@ -127,35 +127,24 @@ Launch `codex` and run `/mcp` to confirm. The OAuth flow still applies on the fi
 
 ### Cursor CLI
 
-Clone the Kobiton plugin into Cursor's global plugin directory:
-
-```bash
-git clone https://github.com/kobiton/automate.git ~/.cursor/plugins/kobiton-automate
-```
-
-Then start a Cursor CLI session from your project:
+Open your project and start a Cursor CLI session:
 
 ```bash
 cd my-project
 agent
 ```
 
-The plugin's `.cursor-plugin/plugin.json` registers the `kobiton` MCP server, bundled skills, and a `sessionStart` hook that auto-installs `~/.kobiton/bin/kobiton`. Run `/mcp` inside the session to confirm `kobiton` is connected — the first call opens a browser for Kobiton OAuth login.
+Inside the session, add the Kobiton marketplace and fetch the **automate** plugin from the repo.
 
-<details>
-<summary><strong>Alternative: project-only MCP config (no global install)</strong></summary>
-
-For a lightweight per-project setup that skips the bundled skills and the sessionStart hook, just drop `.cursor/mcp.json` from this repo into your project's `.cursor/` directory:
-
-```bash
-cd my-project
-mkdir -p .cursor
-curl -sLO --output-dir .cursor https://raw.githubusercontent.com/kobiton/automate/main/.cursor/mcp.json
-agent
+```
+/plugin marketplace add https://github.com/kobiton/automate
 ```
 
-You won't get the bundled skills or auto CLI-wrapper install — run `/automate:setup`-equivalent flows manually if needed.
-</details>
+Then open **automate** and choose **Install for you**, it installs the 2 skills, the `kobiton` MCP server, and the `/automate:setup` and `/automate:doctor` commands.
+
+Run `/mcp list`, select **kobiton**, and choose **Login** to complete Kobiton OAuth in the browser.
+
+Run `/automate:setup` once to install the `~/.kobiton/bin/kobiton` CLI wrapper used by the `run-interactive-test` skill.
 
 ### Other MCP Clients
 
@@ -189,6 +178,21 @@ The Cursor IDE (the desktop editor, not the `agent` CLI covered above) reads MCP
 
 Adjust to your client's specific format. The server URL and OAuth handshake are the same; if your client doesn't support OAuth, fall back to the API-key auth path (see [API Key Authentication](#api-key-authentication-alternative) below) - most clients accept custom `headers` blocks.
 
+<details>
+<summary><strong>Alternative: project-only MCP config (MCP server only, no skills or commands)</strong></summary>
+
+For a lightweight per-project setup that registers just the `kobiton` MCP server, drop `.cursor/mcp.json` from this repo into your project's `.cursor/` directory:
+
+```bash
+cd my-project
+mkdir -p .cursor
+curl -sLO --output-dir .cursor https://raw.githubusercontent.com/kobiton/automate/main/.cursor/mcp.json
+agent
+```
+
+You won't get the bundled skills, the `/automate:setup` and `/automate:doctor` commands, or the CLI wrapper.
+</details>
+
 ## Login
 
 The first time your AI assistant calls a Kobiton tool, a browser window opens for OAuth login. Sign in with your Kobiton credentials, tokens are then managed automatically by the assistant.
@@ -199,7 +203,7 @@ You can also trigger or inspect authentication explicitly:
 - **GitHub Copilot CLI**: type `/mcp auth kobiton` to start the OAuth flow; use `/mcp` (or `/mcp show`) to inspect server status
 - **Gemini CLI**: type `/mcp auth kobiton` to start the OAuth flow; use `/mcp` to inspect server status
 - **Codex CLI**: browser opens automatically on the first MCP tool call (e.g. *"List my Kobiton devices"*) after plugin install. Tokens are cached in the OS keychain with automatic refresh. Use `/mcp` (or `/mcp verbose`) to inspect server status
-- **Cursor CLI**: type `/mcp` and select **kobiton** to start the OAuth flow; tokens are stored by Cursor in the OS keychain
+- **Cursor CLI**: run `/mcp list`, select **kobiton**, and choose **Login** to start the OAuth flow; tokens are stored by Cursor in the OS keychain
 
 Behind the scenes, `.mcp.json` points to the Kobiton MCP server and authentication uses OAuth 2.1:
 
@@ -270,8 +274,8 @@ To verify everything is wired correctly, run the diagnostic:
 
 **CLI symlink install behavior across CLIs:** The `run-interactive-test` skill depends on a `~/.kobiton/bin/kobiton` symlink.
 
-- **Claude Code, Codex CLI, Cursor CLI**: is recreated automatically by a bundled SessionStart hook on every session start. On Codex, the first session prompts you to trust the hook once via `/hooks`; subsequent sessions run it silently. Cursor uses the same mechanism via `.cursor/hooks/hooks.json` (the `sessionStart` event). Running `/automate:setup` (Claude) also recreates the symlink on demand.
-- **GitHub Copilot CLI, Gemini CLI**: both CLIs load `/automate:setup` (Copilot reads Claude-format Markdown commands; Gemini reads bundled TOML commands at `commands/automate/setup.toml`). Run `/automate:setup` once after install to create the symlink. Neither CLI has a SessionStart hook, so the symlink isn't recreated automatically - re-run setup if it goes missing.
+- **Claude Code, Codex CLI**: recreated automatically by a bundled SessionStart hook on every session start. On Codex, the first session prompts you to trust the hook once via `/hooks`; subsequent sessions run it silently. Running `/automate:setup` also recreates the symlink on demand.
+- **GitHub Copilot CLI, Gemini CLI, Cursor CLI**: no SessionStart hook runs, so create the symlink manually by running the setup command once after install: `/automate:setup` on Copilot, Gemini and Cursor (Copilot reads Claude-format Markdown commands; Gemini reads bundled TOML at `commands/automate/setup.toml`). Re-run it if the symlink goes missing.
 
 Manual fallback - if the SessionStart hook was denied on Codex, or you need to install without an active session:
 
@@ -367,7 +371,7 @@ After the plugin is updated upstream, pull the latest version:
 - **Claude Code / Copilot CLI:** run `/plugin install automate@kobiton` again
 - **Gemini CLI:** run `gemini extensions update kobiton-automate` from your shell
 - **Codex CLI:** run `codex plugin marketplace upgrade` to refresh the marketplace catalog, then reinstall the plugin from the browser to pull the latest manifest
-- **Cursor CLI:** `cd` into your clone (`~/.cursor/plugins/kobiton-automate` or `.kobiton-automate` inside your project) and run `git pull`. Restart `agent` so the new manifest is picked up.
+- **Cursor CLI:** re-run `/plugin marketplace add https://github.com/kobiton/automate` and reinstall the **automate** plugin - Cursor CLI has no dedicated update command yet (`/plugin marketplace list` only lists what's installed). Restart `agent` so the new manifest is picked up.
 
 To make sure the assistant picks up the changes with no stale cache, reload per CLI:
 
