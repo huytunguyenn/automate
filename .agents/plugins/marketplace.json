@@ -1,5 +1,9 @@
 {
   "name": "kobiton",
+  "owner": {
+    "name": "Kobiton Inc.",
+    "email": "support@kobiton.com"
+  },
   "interface": {
     "displayName": "Kobiton"
   },
@@ -7,6 +11,7 @@
     {
       "name": "automate",
       "source": "./.codex",
+      "license": "MIT",
       "category": "testing",
       "policy": {
         "installation": "AVAILABLE",

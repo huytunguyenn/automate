@@ -98,7 +98,30 @@ For web testing, replace `--app <app>` with `--browserName <browser> --testingTy
 
 Compare the JSON output against the parsed script capabilities using the [reconciliation rules](references/capabilities.md#reconciliation-rules): must-match fields are autocorrected to the rendered values, suggested defaults require user confirmation before changing, and user-controlled capabilities are left untouched.
 
-The rendered output also includes `kobiton:aiToolName: "<host>"` so Kobiton can attribute sessions started by this skill to the calling AI workspace in adoption analytics. The host is auto-detected from runtime env markers (`CLAUDECODE=1` → Claude, `COPILOT_CLI=1` → Copilot, `GEMINI_CLI=1` → Gemini, `CODEX_THREAD_ID` → Codex). Override with `--aiToolName <name>` or set `KOBITON_AI_TOOL_NAME=<name>` to force a specific value. Pass `--aiToolName ""` to omit the capability entirely.
+The rendered output also includes `kobiton:aiToolName: "<host>"` so Kobiton can attribute sessions started by this skill to the calling AI workspace in adoption analytics. Resolution order:
+
+1. `--aiToolName <name>` CLI flag (always wins; `""` opts out entirely)
+2. `KOBITON_AI_TOOL_NAME` env var (also accepts `""` to opt out)
+3. Auto-detect from runtime markers, any non-empty value:
+   - `CLAUDECODE` -> Claude
+   - `COPILOT_CLI` -> Copilot
+   - `GEMINI_CLI` -> Gemini
+   - `CODEX_THREAD_ID` (or `CODEX_CLI`) -> Codex — Codex CLI sets the thread ID, not a generic `CODEX_CLI` flag; the latter is accepted for manual override only
+4. If nothing matches, no `kobiton:aiToolName` capability is emitted.
+
+This capability is treated as **must-match** during reconciliation (see `references/capabilities.md`): if the rendered output includes `kobiton:aiToolName`, always overwrite any existing value in the user's script with it. A stale value from a prior session run under a different CLI would mis-attribute adoption analytics. If the rendered output omits the capability (no runtime marker matched), leave the user's value untouched.
+
+**The injection is non-interactive.** Edit the script silently using your `Edit` tool — mention the one-line change inline in your reply for transparency (e.g., *"Added `kobiton:aiToolName: 'Gemini'` to your capabilities for adoption analytics."*), but **do NOT ask the user to confirm** before editing. The value is deterministic (it matches the runtime env from auto-detect), there is nothing to negotiate. If the user objects, they can revert the edit themselves.
+
+**Required: verify the injection landed before Step 4.** The `kobiton:aiToolName` capability must be present in the script's source code (e.g., the capabilities object/dict/map). If your reconciliation pass didn't write it to the script, Kobiton will never see it — there is no sidecar config that injects it at runtime. Confirm with a literal-string grep against the user's script:
+
+```bash
+grep -F 'kobiton:aiToolName' <path-to-user-script>
+```
+
+- **Match found** — injection succeeded, proceed to Step 4.
+- **No match, rendered output had a value** — your edit was skipped. Use your `Edit` tool to add the capability to the script's capabilities block now (use the language-appropriate syntax for the script — JS/TS object literal, Python dict, Java `Map.of(...)` / `DesiredCapabilities`, .NET `AppiumOptions.AddAdditionalCapability(...)`, Ruby hash), then re-run the grep. **Do NOT proceed to Step 4 until the grep succeeds.**
+- **No match, rendered output omitted the capability** — expected (no runtime marker matched, or user opted out via `--aiToolName ""` or `KOBITON_AI_TOOL_NAME=""`). Skip injection, proceed.
 
 ### 4. Confirm & execute
 
@@ -126,20 +149,28 @@ Wait for their response. If they decline, skip to Step 6.
 
 If they agree, wait **2 seconds** after the script was launched in Step 4 (to allow the session to initialize on Kobiton), then open the session in the user's browser.
 
-**Determine the portal URL:** Read `.mcp.json` to get the MCP server URL, then map it to the portal base URL:
+**Determine the portal URL:** Read `.mcp.json` to get the MCP server URL, then derive the portal base URL by replacing the `api` host with the `portal` equivalent (drop any trailing `/mcp`):
 
 | MCP Server | Portal Base URL |
 |------------|----------------|
-| `api.kobiton.com` | `https://portal.kobiton.com` |
-| `api-test-green.kobiton.com` | `https://portal-test.kobiton.com` |
+| `https://api.kobiton.com/mcp` | `https://portal.kobiton.com` |
+| `https://api-*.kobiton.com/mcp` | `https://portal-*.kobiton.com` (same `*` suffix) |
 
-**Build the launch URL:**
+For example, an `api-*.kobiton.com` host maps to its matching `portal-*.kobiton.com` host. If the mapping doesn't resolve, fall back to `https://portal.kobiton.com`.
+
+**Build the launch URL.** Default to the **device-only view** — it shows just the device screen, no surrounding Kobiton UI, ideal for watching an automation run, sharing, or embedding:
+
+```
+<portal-base-url>/devices/launch?id=<deviceId>&view=device-only
+```
+
+Where `<deviceId>` is the ID of the selected device from Step 2 (returned by `listDevices`, `getDeviceStatus`, or `reserveDevice`).
+
+**Fall back to the default view** (without `&view=device-only`) only when the user explicitly asks to interact with the device — e.g. "let me drive it manually", "open the full session view", "I want to tap on the screen", or similar interaction-implying language. The default view shows the full Kobiton UI around the device (sidebars, controls, action panels):
 
 ```
 <portal-base-url>/devices/launch?id=<deviceId>
 ```
-
-Where `<deviceId>` is the ID of the selected device from Step 2 (returned by `listDevices`, `getDeviceStatus`, or `reserveDevice`).
 
 **Browser preference:** Check auto memory for a saved browser preference. If none exists, ask the user which browser to use:
 

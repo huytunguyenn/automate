@@ -1,12 +1,16 @@
 {
   "name": "automate",
-  "version": "1.0.0",
+  "version": "1.2.2",
   "type": "module",
   "private": true,
   "description": "Kobiton plugin manifests, tool schemas, and skills for AI coding assistants",
+  "license": "MIT",
   "scripts": {
-    "build": "node scripts/build-tool-definitions.js",
-    "validate": "node scripts/validate.js",
+    "build:codex": "node scripts/sync-codex-artifacts.js",
+    "build:tools": "node scripts/build-tool-definitions.js",
+    "build:version": "node scripts/sync-version.js",
+    "build": "pnpm run build:tools && pnpm run build:codex && pnpm run build:version",
+    "validate": "node scripts/validate.js && node scripts/sync-codex-artifacts.js --check && node scripts/sync-version.js --check",
     "test": "vitest run",
     "test:watch": "vitest"
   },

@@ -1,7 +1,7 @@
-import {readFileSync} from 'fs'
-import {resolve} from 'path'
+import {readFileSync} from 'node:fs'
+import {resolve} from 'node:path'
+import {parseArgs} from 'node:util'
 import ejs from 'ejs'
-import {parseArgs} from 'util'
 
 const TEMPLATE_PATH = resolve(
   import.meta.dirname, '..', 'references', 'templates', 'appium.ejs'
@@ -30,12 +30,13 @@ const {values: flags} = parseArgs({
 //      Always wins. `--aiToolName ""` opts out (no capability emitted).
 //   2. KOBITON_AI_TOOL_NAME env var — host plugin can configure once
 //      per process (e.g. a future Gemini/Codex skill's wrapper).
-//   3. Well-known host-runtime markers, in order:
+//   3. Well-known host-runtime markers, in order (verified 2026-05-19):
 //        - CLAUDECODE=1     → "Claude"  (Anthropic Claude Code)
 //        - COPILOT_CLI=1    → "Copilot" (GitHub Copilot CLI)
-//        - GEMINI_CLI=1     → "Gemini"  (Google Gemini CLI, speculative)
-//        - CODEX_THREAD_ID  → "Codex"   (OpenAI Codex CLI; also
-//          accepts CODEX_CLI=1 for convention parity)
+//        - GEMINI_CLI=1     → "Gemini"  (Google Gemini CLI)
+//        - CODEX_THREAD_ID  → "Codex"   (OpenAI Codex CLI sets this
+//          to the active thread UUID; CODEX_CLI=1 is accepted for
+//          manual override but Codex itself does not set it)
 //   4. Empty string — emits no `kobiton:aiToolName` capability.
 //      Better than mis-attributing to a default tool.
 function detectAiToolName() {

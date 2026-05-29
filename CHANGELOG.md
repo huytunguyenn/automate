@@ -4,6 +4,20 @@
 
 - Documented cross-client install paths for Cursor, ChatGPT (Apps SDK), and Continue / Cline / other generic MCP clients in README — adds an "Other MCP Clients" subsection under Installation. Ships a default `.cursor/mcp.json` at the repo root so Cursor users get a working config without hand-crafting one. Honest framing: configs derived from each client's published documentation; end-to-end-tested only on the four already-documented clients
 
+
+## 1.2.2 - 2026-05-25
+
+- Added 14 Test Case Management MCP tool schemas in `tools/test-management.yaml` — test cases (`saveTestCase`, `listTestCases`, `getTestCase`, `updateTestCase`, `deleteTestCase`), test runs (`createTestRun`, `listTestRuns`, `getTestRun`, `terminateTestRun`), and test suites (`listTestSuites`, `getTestSuite`, `createTestSuite`, `updateTestSuite`, `deleteTestSuite`)
+- Updated bundled `kobiton` CLI binary in `run-interactive-test` skill to the latest version
+- Expanded `run-interactive-test` adb-shell documentation for AI agents: quoting rules (local vs device shell parsing), platform guard (Android only), 22-row intent-to-command cookbook, big-output redirect pattern (to avoid 25k-token MCP overflow), long-running command guidance, and response parsing gotchas in `references/response-shapes.md` — notably that `adb` returns exit code 0 even when the inner command fails
+
+
+## 1.2.1 - 2026-05-20
+
+- `run-automation-suite` skill now defaults to the **device-only view URL** (`?view=device-only`) when surfacing the live session link, hiding the surrounding Kobiton UI for a cleaner watch-the-test experience. Falls back to the default-view URL only when the user explicitly asks to interact with the device.
+- Portal URL mapping in the skill is now derivation-based (`api*.kobiton.com` → `portal*.kobiton.com`) instead of a hard-coded per-env table.
+
+
 ## 1.2.0 - 2026-05-18
 
 - Multi-CLI support: install on GitHub Copilot CLI, Gemini CLI, and Codex CLI in addition to Claude Code

@@ -1,16 +1,26 @@
 #!/bin/bash
 # Installs the ~/.kobiton/bin/kobiton symlink pointing at this plugin
-# version's run.sh wrapper. Idempotent — safe to invoke repeatedly.
+# version's run.sh wrapper. Idempotent - safe to invoke repeatedly.
 #
-# Called from three places:
-#   1. Claude Code's SessionStart hook (auto, every session)
-#   2. Codex CLI's SessionStart hook (auto; Codex sets
-#      CLAUDE_PLUGIN_ROOT for hook compatibility)
-#   3. /automate:setup command (manual, one-off per install — needed
-#      for CLIs whose hook spec we don't ride on yet, e.g. Gemini)
+# Invoked from four places, one per supported AI host:
+#   1. Claude Code's SessionStart hook (auto, every session) declared
+#      in hooks/hooks.json. The /automate:setup slash command also
+#      invokes it on demand.
+#   2. Codex CLI's SessionStart hook (auto, every session). Codex
+#      loads the same hooks/hooks.json via the `hooks` field in
+#      .codex-plugin/plugin.json; on first run the user must trust
+#      the hook once via Codex's /hooks command.
+#   3. GitHub Copilot CLI via the /automate:setup slash command -
+#      Copilot loads Claude-format markdown commands, but has no
+#      SessionStart hook, so users run /automate:setup once after
+#      install.
+#   4. Gemini CLI via the /automate:setup slash command - Gemini
+#      loads bundled TOML commands at commands/automate/setup.toml,
+#      which invokes this script upfront via !{...} as Step 0.
 #
 # Plugin root resolution: prefer CLAUDE_PLUGIN_ROOT if the host CLI
-# injected it; otherwise derive from this script's own location
+# injected it (Codex sets it as a compatibility alias for its own
+# PLUGIN_ROOT); otherwise derive from this script's own location
 # (`<plugin-root>/scripts/install-cli.sh`).
 
 set -euo pipefail
